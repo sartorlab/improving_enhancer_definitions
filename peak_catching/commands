@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Set paths here
+
+ROOT_DIR="/home/porchard/improving_enhancer_definitions"
+SCRIPT_DIR="${ROOT_DIR}/scripts"
+CHIPSEQ_DIR="${ROOT_DIR}/ENCODE_chipseq"
+CURRENT_GENE_LIST="${ROOT_DIR}/current_definitions/genes.txt" # chrom, start, end, geneid (no header; tab-separated)
+CURRENT_ENHANCER_LIST="${ROOT_DIR}/current_definitions/enhancers.txt" #  chrom, start, end (no header; tab-separated)
+PIPELINE="${ROOT_DIR}/peak_catching/pipeline"
+
+N_CORES="20" # number of cores available to use...
+
+# We want to evaluate how well each set of enhancers captures the ChIP-seq peaks
+# I've created an R script to do this (calculate_peak_catching_statistics.R).  As input it will take a ChIP-seq experiment (simply the files from ENCODE) and will take
+# a list of loci, representing the genes/enhancers.  Because the proportion of the caught peaks landing in genes vs enhancers is of interest, the locus list needs to indicate whether each genomic stretch is a gene or an enhancer.  At this point we do not care which (if any) gene each genomic stretch is assigned to.  Therefore, this locus list is simply a tab-separated list with 4 columns: chromosome, start, end, and gene/enhancer ("gene" if the stretch represents e.g. a gene's TSS, and "enhancer" if the stretch represents an enhancer)
+
+
+### Make this locus list for the current "base" gene/enhancer set
+cut -f1-3 $CURRENT_GENE_LIST | perl -pe 's/$/\tgene/' > current.txt
+cat $CURRENT_ENHANCER_LIST | perl -pe 's/$/\tenhancer/' >> current.txt
+
+### Make the locus list for the new enhancer lists, ignoring whether or not an enhancer can be assigned to a gene
+for i in `ls ${ROOT_DIR}/new_enhancer_lists/*enhancers`
+do
+	bn=$(basename $i | perl -pe 's/\.enhancers//')
+	cut -f1-3 $CURRENT_GENE_LIST | perl -pe 's/$/\tgene/' > ${bn}.no_assignment.txt
+	cat $i | perl -pe 's/$/\tenhancer/' >> ${bn}.no_assignment.txt
+done
+
+### Make the locus list for the new enhancer lists, taking only the enhancers that have been assigned to genes (i.e., are in the *pairs files)
+for i in `ls ${ROOT_DIR}/new_locus_lists/*all*.pairs`
+do
+	bn=$(basename $i | perl -pe 's/\.all//; s/\.pairs$//')
+	cut -f1-3 $CURRENT_GENE_LIST | perl -pe 's/$/\tgene/' > ${bn}.assignment.txt
+	cut -f2 $i | perl -pe 's/:/\t/g; s/$/\tenhancer/' >> ${bn}.assignment.txt
+done
+
+### Now print the commands to calculate the number of peaks caught by each set of enhancers, number of peaks missed, density of peaks in the enhancer/gene regions, etc
+for i in `ls current.txt *assignment.txt`
+do
+	bn=$(echo $i | perl -pe 's/\.txt//')
+	for x in `ls ${CHIPSEQ_DIR}/* | grep Tfbs`
+	do
+		tfbs_bname=$(basename $x | perl -pe 's/\.narrowPeak.gz$//')
+		printf "Rscript ${SCRIPT_DIR}/calculate_peak_catching_statistics.R --locus_list $i --peak_list $x --out ${tfbs_bname}.${i}.coverage\n" >> $PIPELINE
+	done
+done
+
+### In order to run through the pipeline faster, add in "wait" commands and push tasks to the background
+cat $PIPELINE | perl -pe 'if($. % '${N_CORES}' == 0){print("wait\n")}else{s/$/ \&/}' > $PIPELINE.tmp
+mv $PIPELINE.tmp $PIPELINE

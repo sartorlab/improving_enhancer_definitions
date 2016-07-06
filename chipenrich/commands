@@ -1,0 +1,38 @@
+ROOT_DIR="/home/porchard/improving_enhancer_definitions"
+
+CHIPSEQ_DIR="${ROOT_DIR}/ENCODE_chipseq"
+GENE_LIST="${ROOT_DIR}/current_definitions/genes.txt"
+PAIRS_DIR="${ROOT_DIR}/new_locus_lists"
+SCRIPTS_DIR="${ROOT_DIR}/scripts"
+
+CURRENT_LOCUS_DEFINITIONS="${ROOT_DIR}/current_definitions/current.ldef"
+
+PIPELINE="${ROOT_DIR}/chipenrich/pipeline"
+rm -rf $PIPELINE
+
+N_CORES="20"
+
+# This is for running chipenrich on the new locus definitions and comparing them to the old definitions
+# We therefore need to reformat the *pairs files and gene list to make the expected input format for chipenrich
+
+# Make new locus definitions from the *pairs files in the new_locus_lists directory 
+for pairs_list in `ls ${PAIRS_DIR}/*.all.*.pairs`
+do
+	bn=$(basename $pairs_list | perl -pe 's/\.all//; s/\.pairs$//')
+	python2.7 ${SCRIPTS_DIR}/create_locus_definitions_from_gene_list_and_pairs_file.py --gene_list $GENE_LIST --pairs_list $pairs_list > $bn.ldef
+done
+
+# symlink in the current 'base' locus definitions as well
+ln -s ${CURRENT_LOCUS_DEFINITIONS} current.ldef
+
+# now print the commands to run to the pipeline file
+for chipseq_experiment in `cat TFs_of_interest.txt`
+do 
+	chipseq_file=$(ls ${CHIPSEQ_DIR} | grep $chipseq_experiment)
+	chipseq_bn=$(basename $chipseq_experiment | perl -pe 's/\.gz$//')
+	for locus_definitions in `ls *ldef`
+        do
+                ldef_bn=$(basename $locus_definitions | perl -pe 's/\.ldef$//')
+                printf "Rscript ${SCRIPTS_DIR}/run_chipenrich.R --chipseq ${CHIPSEQ_DIR}/${chipseq_file} --locus_definitions $locus_definitions --out $ldef_bn.$chipseq_bn --n_cores $N_CORES\n" >> $PIPELINE
+        done
+done

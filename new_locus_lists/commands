@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# set paths here. Only the ROOT_DIR path should need to be set, as the others are relative to ROOT_DIR
+ROOT_DIR="/home/porchard/improving_enhancer_definitions"
+EXPERIMENT_INFO_FILE="${ROOT_DIR}/new_locus_lists/experiment_info.txt"
+SCRIPT_DIR="${ROOT_DIR}/scripts" # directory where all scripts are kept
+INTERACTION_DIR="${ROOT_DIR}/interaction_lists" # directory that includes the .interaction files (each line is chrom1, start1, end1, chrom2, start2, end2) 
+GENE_LIST="${ROOT_DIR}/current_definitions/genes.txt" # one gene per line. chromosome, start, end, gene_id
+
+# generate the list of .enhancer files; each of these files will be processed separately to create different locus definitions
+rm -f enhancer_files.txt
+echo "../new_enhancer_lists/chromhmm_dnase.2000.enhancers" >> enhancer_files.txt
+echo "../new_enhancer_lists/chromhmm_dnase.0.enhancers" >> enhancer_files.txt
+echo "../new_enhancer_lists/chromhmm.2000.enhancers" >> enhancer_files.txt
+echo "../new_enhancer_lists/chromhmm.0.enhancers" >> enhancer_files.txt
+
+# generate the individual pipeline files
+for i in `cat enhancer_files.txt`
+do
+	bname_enhancer_list=$(basename $i | perl -pe 's/.enhancers//')
+	for x in `ls ${INTERACTION_DIR}/*interactions`
+	do
+		bname=$(basename $x | perl -pe 's/.interactions//')
+		protein=$(grep $bname $EXPERIMENT_INFO_FILE | cut -f2)
+		if [ "$protein" == "CTCF" ]
+		then
+			printf "Rscript ${SCRIPT_DIR}/link_genes_and_enhancers.R --gene_loci $GENE_LIST --enhancers $i --interactions $x --method point_to_point --out ${bname_enhancer_list}.${bname}.P2P.pairs\n" >> ${bname_enhancer_list}.P2P.pipeline
+			printf "Rscript ${SCRIPT_DIR}/link_genes_and_enhancers.R --gene_loci $GENE_LIST --enhancers $i --interactions $x --method encompassing --max_genes_per_region 1 --out ${bname_enhancer_list}.${bname}.E.pairs\n" >> ${bname_enhancer_list}.E.pipeline
+		else
+			printf "Rscript ${SCRIPT_DIR}/link_genes_and_enhancers.R --gene_loci $GENE_LIST --enhancers $i --interactions $x --method point_to_point --out ${bname_enhancer_list}.${bname}.P2P.pairs\n" >> ${bname_enhancer_list}.P2P.pipeline
+			printf "Rscript ${SCRIPT_DIR}/link_genes_and_enhancers.R --gene_loci $GENE_LIST --enhancers $i --interactions $x --method point_to_point --out ${bname_enhancer_list}.${bname}.E.pairs\n" >> ${bname_enhancer_list}.E.pipeline
+		fi
+	done
+	
+	printf "cat ${bname_enhancer_list}.*.P2P.pairs | grep -v gene | sort | uniq > ${bname_enhancer_list}.all.P2P.pairs" >> ${bname_enhancer_list}.P2P.pipeline
+	printf "cat ${bname_enhancer_list}.*.E.pairs | grep -v gene | sort | uniq > ${bname_enhancer_list}.all.E.pairs" >> ${bname_enhancer_list}.E.pipeline
+
+done

@@ -1,0 +1,13 @@
+# Interaction files should be in the format:
+# chrom_1	start_1	end_1	chrom_2	start_2	end_2
+
+# There should be no header in the file
+# The file names should end with the suffix ".interactions"
+
+# The naive and primed pluripotent stem cell datasets (cohesin chia-pet) are from:
+# 3D Chromosome Regulatory Landscape of Human Pluripotent Cells
+# Download site:
+# http://www.cell.com/action/showImagesData?pii=S1934-5909%2815%2900505-6
+# They are in excel format here, so I've already converted them and simply included them in this repository
+
+# The ENC* files are files that I've processed using Mango (see the mango_pipelines directory -- this can be used to recreate these files, although they may differ a little depending on the version of Mango).  I used version 1.1.7

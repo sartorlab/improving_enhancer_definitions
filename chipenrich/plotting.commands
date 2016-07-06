@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Note: hard-coding the number of locus definitions (9) that we'll be comparing between.  Will make this more flexible later
+
+ROOT_DIR="/home/porchard/improving_enhancer_definitions"
+PIPELINE="${ROOT_DIR}/chipenrich/pairs_plots.pipeline"
+SCRIPTS_DIR="${ROOT_DIR}/scripts"
+
+rm -rf $PIPELINE
+
+# Figure out which experiments have already been processed using all of the locus definitions
+ls | grep Tfbs | grep results.tab | perl -pe 's/.*\.wg//' | sort | uniq -c | perl -pe 's/^\s+//; s/\s+/\t/' | grep "^9" | cut -f2 > /tmp/experiments.txt
+
+# now create the plotting commands
+for i in `cat /tmp/experiments.txt`
+do
+	RESULTS=$(ls | grep $i | perl -pe 's/\n$/\t/' | perl -ne 'my @line = split /\t/, $_; print(join(",", @line))')
+	LABELS=$(ls | grep $i | perl -pe 's/\.wg.*//; s/\n$/\t/' | perl -ne 'my @line = split /\t/, $_; print(join(",", @line))')
+	OUT=$(echo $i | perl -pe 's/\.tab/.comparisons.png/')
+	printf "Rscript ${SCRIPTS_DIR}/chipenrich_pairs.R --results $RESULTS --labels $LABELS --out $OUT\n" >> $PIPELINE
+done
+
+rm /tmp/experiments.txt

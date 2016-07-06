@@ -1,0 +1,11 @@
+wget -nv ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1872nnn/GSM1872886/suppl/GSM1872886_GM12878_CTCF_PET_clusters.txt.gz
+wget -nv ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1872nnn/GSM1872889/suppl/GSM1872889_HeLa_RNAPII_PET_clusters.txt.gz
+wget -nv ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1872nnn/GSM1872888/suppl/GSM1872888_HeLa_CTCF_PET_clusters.txt.gz
+
+zcat GSM1872886_GM12878_CTCF_PET_clusters.txt.gz | cut -f1-6 > ruan_2015.GM12878.CTCF.interactions
+zcat GSM1872888_HeLa_CTCF_PET_clusters.txt.gz | cut -f1-6 > ruan_2015.HeLa.CTCF.interactions
+zcat GSM1872889_HeLa_RNAPII_PET_clusters.txt.gz | cut -f1-6 > ruan_2015.HeLa.PolII.interactions
+
+rm GSM1872886_GM12878_CTCF_PET_clusters.txt.gz
+rm GSM1872888_HeLa_CTCF_PET_clusters.txt.gz
+rm GSM1872889_HeLa_RNAPII_PET_clusters.txt.gz
