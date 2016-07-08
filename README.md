@@ -11,12 +11,18 @@ It includes the following:
 
 I've set it up so that everything can be run using a series of ```make``` commands.  The make commands are running the commands listed in commands files in the respective directories.  I've also added --help messages to most or all of the R scripts that are used (in the ```scripts``` directory), so hopefully by looking at the commands files and the options for the R scripts it will be clear how any desired modifications can be made. I've tried to scatter comments throughout the commands files and R scripts as well.
 
+If something doesn't seem to work as it's supposed to, if something's unclear, etc., my email is porchard@umich.edu.
+
+I've also included some jupyter notebooks and my rotation wrap-up powerpoint in the "other_materials" directory.
+
 # Relevant file formats
 The instructions below mention a number of file formats that I used.  They are described here. There also files named ```commands``` or ```*.commands``` throughout the directories; these are the files called by the Makefiles, listing the commands to be run.
 
 ## Pairs file
 
-A pairs file ends in *.pairs
+A pairs file name ends in *.pairs. It has two columns.  The first column represents a gene ID, the second column represents an enhancer that has been assigned to the gene (the enhancer is represented in the format "chrom:start:end", e.g. "chr2:20000:22000").
+
+My scripts assume that there are no headers in these files.
 
 ## Interactions file
 
@@ -72,7 +78,7 @@ Once the ChIA-PET data is all there, and you've generated the enhancer lists, yo
 
 	make pipelines
 
-This will create a number of *.pipeline files which you can simply run using bash.  When these are finished there will be files ending with "*.all.E.pairs" or "*.all.P2P.pairs" (described below).
+This will create a number of ```*.pipeline``` files which you can simply run using bash.  When these are finished there will be files ending with "*.all.E.pairs" or "*.all.P2P.pairs" (described below).
 
 This part of the pipeline links enhancers to genes in two different ways.  One is the "point-to-point" method (P2P).  This just means that if there are any enhancer(s) at one end of the interaction, and gene(s) at the other end, then these enhancers are assigned to these genes.  The second is the "encompassing" method (E).  This is something that I tried based on the CTCF-looping model of genome organization; if CTCF molecules interact to form loops, and genes and enhancers in these loops interact, then in CTCF/cohesin ChIA-PET data we may wish to take not only the _ends_ of the interactions but everything in between.  At the moment I have it set up so that the within a CTCF loop, if there is only one gene then this gene will be linked to all the enhancers in the loop.  If there is more than one gene present, then no assignments are made based on that loop (this is the --max_genes_per_region argument for the link_genes_and_enhancers.R script, as indicated by the --help menu for that script).
 

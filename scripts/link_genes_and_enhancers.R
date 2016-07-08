@@ -175,6 +175,6 @@ if (opts$method == "point_to_point") {
   gene_enhancer_pairs <- gene_enhancer_pairs[,c("gene_id", "enhancer_id")]
   gene_enhancer_pairs <- unique(gene_enhancer_pairs)
   
-  write.table(x = gene_enhancer_pairs, file = opts$out, append = F, quote = F, sep = "\t", row.names = F, col.names = T)
+  write.table(x = gene_enhancer_pairs, file = opts$out, append = F, quote = F, sep = "\t", row.names = F, col.names = F)
 }
 
