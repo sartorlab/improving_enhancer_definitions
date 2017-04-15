@@ -5,7 +5,8 @@ option_list <- list(
   make_option(c("--dnase"), action = "store", type = "character", help = "[Optional] Path to a file listing the enhancers.  Format is one line per locus, tab-separated, chromosome, start, end, enhancer_id (no header)"),
   make_option(c("--tissue_threshold_dnase"), action = "store", type = "numeric", default = 1, help = "[Optional] An integer.  If the DNase list is used to create the enhancer list, then only DNase sites supported by this number of experiments are included.  There are ~125 experiments in the ENCODE DNase list (Default: 1)."),
   make_option(c("--chrom_hmm_directory"), action = "store", type = "character", help = "[Optional] Path to the directory containing the ENCODE chromHMM files. The file names should end in '*HMM.bed.gz'"),
-  make_option(c("--fantom"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers from the FANTOM5 consortium. Format is one line per enhancer, tab-separated, "),
+  make_option(c("--fantom"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers from the FANTOM5 consortium."),
+  make_option(c("--thurman"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers (and interactions) from Thurman et al. paper."),
   make_option(c("--extension"), action = "store", type = "numeric", help = "[Required] Number of base pairs to extend enhancers to"),
   make_option(c("--out"), action = "store", type = "character", help = "[Required] File name for the resulting 'pairs' file")
 )
