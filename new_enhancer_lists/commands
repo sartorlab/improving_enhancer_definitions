@@ -13,13 +13,13 @@ DNASE="${ROOT_DIR}/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz" # single fil
 ##### generate the enhancer lists, using chrom_hmm w/ and without the dnase, extending and not
 
 # with dnase, extending 2000 bp
-Rscript ${SCRIPT_DIR}/generate_enhancer_list_from_chromhmm_and_dnase.R --genes $GENE_LIST --dnase $DNASE --tissue_threshold_dnase 2 --chrom_hmm_directory $CHROM_HMM_DIR --extension 2000 --out chromhmm_dnase.2000.enhancers
+Rscript ${SCRIPT_DIR}/generate_enhancer_list.R --genes $GENE_LIST --dnase $DNASE --tissue_threshold_dnase 2 --chrom_hmm_directory $CHROM_HMM_DIR --extension 2000 --out chromhmm_dnase.2000.enhancers
 
 # without dnase, extending 2000 bp
-Rscript ${SCRIPT_DIR}/generate_enhancer_list_from_chromhmm_and_dnase.R --genes $GENE_LIST --chrom_hmm_directory $CHROM_HMM_DIR --extension 2000 --out chromhmm.2000.enhancers
+Rscript ${SCRIPT_DIR}/generate_enhancer_list.R --genes $GENE_LIST --chrom_hmm_directory $CHROM_HMM_DIR --extension 2000 --out chromhmm.2000.enhancers
 
 # with dnase, not extending
-Rscript ${SCRIPT_DIR}/generate_enhancer_list_from_chromhmm_and_dnase.R --genes $GENE_LIST --dnase $DNASE --tissue_threshold_dnase 2 --chrom_hmm_directory $CHROM_HMM_DIR --extension 1 --out chromhmm_dnase.0.enhancers
+Rscript ${SCRIPT_DIR}/generate_enhancer_list.R --genes $GENE_LIST --dnase $DNASE --tissue_threshold_dnase 2 --chrom_hmm_directory $CHROM_HMM_DIR --extension 1 --out chromhmm_dnase.0.enhancers
 
 # without dnase, not extending
-Rscript ${SCRIPT_DIR}/generate_enhancer_list_from_chromhmm_and_dnase.R --genes $GENE_LIST --chrom_hmm_directory $CHROM_HMM_DIR --extension 1 --out chromhmm.0.enhancers
+Rscript ${SCRIPT_DIR}/generate_enhancer_list.R --genes $GENE_LIST --chrom_hmm_directory $CHROM_HMM_DIR --extension 1 --out chromhmm.0.enhancers

@@ -2,14 +2,15 @@ suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list(
   make_option(c("--genes"), action = "store", type = "character", help = "[Required] Path to a file listing the genomic intervals that should be assigned to each gene.  Format is one line per locus, tab-separated, chromosome, start, end, gene_id (no header)"),
-  make_option(c("--dnase"), action = "store", type = "character", help = "[Required] Path to a file listing the enhancers.  Format is one line per locus, tab-separated, chromosome, start, end, enhancer_id (no header)"),
+  make_option(c("--dnase"), action = "store", type = "character", help = "[Optional] Path to a file listing the enhancers.  Format is one line per locus, tab-separated, chromosome, start, end, enhancer_id (no header)"),
   make_option(c("--tissue_threshold_dnase"), action = "store", type = "numeric", default = 1, help = "[Optional] An integer.  If the DNase list is used to create the enhancer list, then only DNase sites supported by this number of experiments are included.  There are ~125 experiments in the ENCODE DNase list (Default: 1)."),
-  make_option(c("--chrom_hmm_directory"), action = "store", type = "character", help = "[Required] Path to the directory containing the ENCODE chromHMM files. The file names should end in '*HMM.bed.gz'"),
+  make_option(c("--chrom_hmm_directory"), action = "store", type = "character", help = "[Optional] Path to the directory containing the ENCODE chromHMM files. The file names should end in '*HMM.bed.gz'"),
+  make_option(c("--fantom"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers from the FANTOM5 consortium. Format is one line per enhancer, tab-separated, "),
   make_option(c("--extension"), action = "store", type = "numeric", help = "[Required] Number of base pairs to extend enhancers to"),
   make_option(c("--out"), action = "store", type = "character", help = "[Required] File name for the resulting 'pairs' file")
 )
 
-option_parser <- OptionParser(usage = "usage: Rscript %prog [options]", option_list = option_list, add_help_option = T, 
+option_parser <- OptionParser(usage = "usage: Rscript %prog [options]", option_list = option_list, add_help_option = T,
                               description = "\nDescription: Accepts a list of gene loci, enhancers, and an interaction dataset (e.g., ChIA-PET or Hi-C).  Prints a list of gene-enhancer pairs. Generates this list using one of two methods: either by finding the interactions that link one gene to one enhancer (each end of the interaction overlaps with one of the genes/enhancers; 'point_to_point') or by declaring all gene/enhancer pairs encompassed WITHIN an interaction region to be interacting ('encompassing'; useful when e.g. enhancers/genes are expected to be within the loops rather than at the interaction edges, such as would be expected within a TAD).")
 opts <- parse_args(option_parser)
 
@@ -86,4 +87,3 @@ chrom_hmm <- chrom_hmm[-1 * kick_out,]
 chrom_hmm$id <- paste(chrom_hmm$chromosome, chrom_hmm$start, chrom_hmm$end, sep = ':')
 
 write.table(chrom_hmm[,c("chromosome", "start", "end")], opts$out, quote = F, sep = "\t", row.names = F, col.names = F)
-
