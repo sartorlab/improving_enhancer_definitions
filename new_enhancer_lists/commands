@@ -2,24 +2,29 @@
 
 ##### Set paths here
 
-ROOT_DIR="/home/porchard/improving_enhancer_definitions"
+ROOT_DIR="~/latte/share/improving_enhancer_definitions"
 SCRIPT_DIR="${ROOT_DIR}/scripts" # directory where all scripts are kept
-GENE_LIST="${ROOT_DIR}/current_definitions/genes.txt" # one gene per line. chromosome, start, end, gene_id
-CHROM_HMM_DIR="${ROOT_DIR}/ENCODE_chromhmm" # *HMM.bed.gz files
-DNASE="${ROOT_DIR}/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz" # single file, from UCSC
+GENE_LIST="${ROOT_DIR}/data/genes/chipenrich_5kb_locusdef.txt" # one gene per line. chromosome, start, end, gene_id, symbol
 
-
+CHROMHMM_DIR="${ROOT_DIR}/data/ENCODE_chromhmm" # *HMM.bed.gz files
+DNASE="${ROOT_DIR}/data/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz" # single file, from UCSC
+FANTOM="${ROOT_DIR}/data/fantom/permissive_enhancers.bed" # single file, from FANTOM5
+THURMAN="${ROOT_DIR}/data/thurman/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz" # single file, from Nature supplement
 
 ##### generate the enhancer lists, using chrom_hmm w/ and without the dnase, extending and not
 
-# with dnase, extending 2000 bp
-Rscript ${SCRIPT_DIR}/generate_enhancer_list.R --genes $GENE_LIST --dnase $DNASE --tissue_threshold_dnase 2 --chrom_hmm_directory $CHROM_HMM_DIR --extension 2000 --out chromhmm_dnase.2000.enhancers
+Rscript ${SCRIPT_DIR}/generate_enhancer_list.R \
+	--genes ${GENE_LIST} \
+	--dnase ${DNASE} --tissue_threshold_dnase 2 \
+	--chrom_hmm_directory ${CHROMHMM_DIR} \
+	--fantom ${FANTOM} \
+	--thurman ${THURMAN} \
+	--extension 1
 
-# without dnase, extending 2000 bp
-Rscript ${SCRIPT_DIR}/generate_enhancer_list.R --genes $GENE_LIST --chrom_hmm_directory $CHROM_HMM_DIR --extension 2000 --out chromhmm.2000.enhancers
-
-# with dnase, not extending
-Rscript ${SCRIPT_DIR}/generate_enhancer_list.R --genes $GENE_LIST --dnase $DNASE --tissue_threshold_dnase 2 --chrom_hmm_directory $CHROM_HMM_DIR --extension 1 --out chromhmm_dnase.0.enhancers
-
-# without dnase, not extending
-Rscript ${SCRIPT_DIR}/generate_enhancer_list.R --genes $GENE_LIST --chrom_hmm_directory $CHROM_HMM_DIR --extension 1 --out chromhmm.0.enhancers
+Rscript ${SCRIPT_DIR}/generate_enhancer_list.R \
+	--genes ${GENE_LIST} \
+	--dnase ${DNASE} --tissue_threshold_dnase 2 \
+	--chrom_hmm_directory ${CHROMHMM_DIR} \
+	--fantom ${FANTOM} \
+	--thurman ${THURMAN} \
+	--extension 1000
