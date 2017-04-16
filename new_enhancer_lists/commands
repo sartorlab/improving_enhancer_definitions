@@ -2,14 +2,13 @@
 
 ##### Set paths here
 
-ROOT_DIR="/Users/rcavalca/Projects/improving_enhancer_definitions"
-SCRIPT_DIR="${ROOT_DIR}/scripts" # directory where all scripts are kept
-GENE_LIST="${ROOT_DIR}/data/genes/chipenrich_5kb_locusdef.txt" # one gene per line. chromosome, start, end, gene_id, symbol
+SCRIPT_DIR="../scripts" # directory where all scripts are kept
+GENE_LIST="../data/genes/chipenrich_5kb_locusdef.txt" # one gene per line. chromosome, start, end, gene_id, symbol
 
-CHROMHMM="${ROOT_DIR}/data/ENCODE_chromhmm/chromhmm_combined.bed.gz" # concatenated chromHMM files
-DNASE="${ROOT_DIR}/data/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz" # single file, from UCSC
-FANTOM="${ROOT_DIR}/data/fantom/permissive_enhancers.bed" # single file, from FANTOM5
-THURMAN="${ROOT_DIR}/data/thurman_dnase/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz" # single file, from Nature supplement
+CHROMHMM="../data/ENCODE_chromhmm/chromhmm_combined.bed.gz" # concatenated chromHMM files
+DNASE="../data/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz" # single file, from UCSC
+FANTOM="../data/fantom/permissive_enhancers.bed" # single file, from FANTOM5
+THURMAN="../data/thurman_dnase/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz" # single file, from Nature supplement
 
 ##### generate the enhancer lists, using chrom_hmm w/ and without the dnase, extending and not
 
