@@ -2,21 +2,21 @@
 
 ##### Set paths here
 
-ROOT_DIR="/home/rcavalca/latte/share/improving_enhancer_definitions"
+ROOT_DIR="/Users/rcavalca/Projects/improving_enhancer_definitions"
 SCRIPT_DIR="${ROOT_DIR}/scripts" # directory where all scripts are kept
 GENE_LIST="${ROOT_DIR}/data/genes/chipenrich_5kb_locusdef.txt" # one gene per line. chromosome, start, end, gene_id, symbol
 
-CHROMHMM_DIR="${ROOT_DIR}/data/ENCODE_chromhmm" # *HMM.bed.gz files
+CHROMHMM="${ROOT_DIR}/data/ENCODE_chromhmm/chromhmm_combined.bed.gz" # concatenated chromHMM files
 DNASE="${ROOT_DIR}/data/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz" # single file, from UCSC
 FANTOM="${ROOT_DIR}/data/fantom/permissive_enhancers.bed" # single file, from FANTOM5
-THURMAN="${ROOT_DIR}/data/thurman/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz" # single file, from Nature supplement
+THURMAN="${ROOT_DIR}/data/thurman_dnase/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz" # single file, from Nature supplement
 
 ##### generate the enhancer lists, using chrom_hmm w/ and without the dnase, extending and not
 
 Rscript ${SCRIPT_DIR}/generate_enhancer_list.R \
 	--genes ${GENE_LIST} \
 	--dnase ${DNASE} --tissue_threshold_dnase 2 \
-	--chromhmm_directory ${CHROMHMM_DIR} \
+	--chromhmm ${CHROMHMM} \
 	--fantom ${FANTOM} \
 	--thurman ${THURMAN} \
 	--extension 1
@@ -24,7 +24,7 @@ Rscript ${SCRIPT_DIR}/generate_enhancer_list.R \
 Rscript ${SCRIPT_DIR}/generate_enhancer_list.R \
 	--genes ${GENE_LIST} \
 	--dnase ${DNASE} --tissue_threshold_dnase 2 \
-	--chromhmm_directory ${CHROMHMM_DIR} \
+	--chromhmm ${CHROMHMM} \
 	--fantom ${FANTOM} \
 	--thurman ${THURMAN} \
 	--extension 1000

@@ -10,8 +10,8 @@ dnase : ./data/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz
 # Not ideal, but what are you going to do?
 CHROMHMM_FILES := wgEncodeBroadHmmGm12878HMM.bed.gz wgEncodeBroadHmmH1hescHMM.bed.gz wgEncodeBroadHmmHepg2HMM.bed.gz wgEncodeBroadHmmHmecHMM.bed.gz wgEncodeBroadHmmHsmmHMM.bed.gz wgEncodeBroadHmmHuvecHMM.bed.gz wgEncodeBroadHmmK562HMM.bed.gz wgEncodeBroadHmmNhekHMM.bed.gz wgEncodeBroadHmmNhlfHMM.bed.gz
 
-chromhmm : ./data/ENCODE_chromhmm/wgEncodeBroadHmmNhlfHMM.bed.gz
-./data/ENCODE_chromhmm/wgEncodeBroadHmmNhlfHMM.bed.gz :
+chromhmm : ./data/ENCODE_chromhmm/chromhmm_combined.bed.gz
+./data/ENCODE_chromhmm/chromhmm_combined.bed.gz :
 	mkdir -p ./data/ENCODE_chromhmm && cd ./data/ENCODE_chromhmm && bash ../../scripts/public_data_download/ChromHMM_download.sh
 
 thurman : ./data/thurman_dnase/genomewideCorrs_above0.7_promoterPlusMinus500kb_withGeneNames_32celltypeCategories.bed8.gz
