@@ -7,7 +7,7 @@ option_list = list(
   make_option(c("--chromhmm_directory"), action = "store", type = "character", help = "[Optional] Path to the directory containing the ENCODE chromHMM files. The file names should end in '*HMM.bed.gz'"),
   make_option(c("--fantom"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers from the FANTOM5 consortium."),
   make_option(c("--thurman"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers (and interactions) from Thurman et al. paper."),
-  make_option(c("--extension"), action = "store", type = "numeric", help = "[Required] Number of base pairs to extend enhancers to"),
+  make_option(c("--extension"), action = "store", type = "numeric", help = "[Required] Number of base pairs to extend enhancers to")
 )
 
 option_parser = OptionParser(usage = "usage: Rscript %prog [options]", option_list = option_list, add_help_option = T,

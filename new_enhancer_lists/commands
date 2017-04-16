@@ -16,7 +16,7 @@ THURMAN="${ROOT_DIR}/data/thurman/genomewideCorrs_above0.7_promoterPlusMinus500k
 Rscript ${SCRIPT_DIR}/generate_enhancer_list.R \
 	--genes ${GENE_LIST} \
 	--dnase ${DNASE} --tissue_threshold_dnase 2 \
-	--chrom_hmm_directory ${CHROMHMM_DIR} \
+	--chromhmm_directory ${CHROMHMM_DIR} \
 	--fantom ${FANTOM} \
 	--thurman ${THURMAN} \
 	--extension 1
@@ -24,7 +24,7 @@ Rscript ${SCRIPT_DIR}/generate_enhancer_list.R \
 Rscript ${SCRIPT_DIR}/generate_enhancer_list.R \
 	--genes ${GENE_LIST} \
 	--dnase ${DNASE} --tissue_threshold_dnase 2 \
-	--chrom_hmm_directory ${CHROMHMM_DIR} \
+	--chromhmm_directory ${CHROMHMM_DIR} \
 	--fantom ${FANTOM} \
 	--thurman ${THURMAN} \
 	--extension 1000
