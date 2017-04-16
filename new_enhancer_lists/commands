@@ -2,7 +2,7 @@
 
 ##### Set paths here
 
-ROOT_DIR="~/latte/share/improving_enhancer_definitions"
+ROOT_DIR="/home/rcavalca/latte/share/improving_enhancer_definitions"
 SCRIPT_DIR="${ROOT_DIR}/scripts" # directory where all scripts are kept
 GENE_LIST="${ROOT_DIR}/data/genes/chipenrich_5kb_locusdef.txt" # one gene per line. chromosome, start, end, gene_id, symbol
 
