@@ -3,9 +3,9 @@ This repository allows one to repeat much of the analysis that I did in my rotat
 
 It includes the following:
 
-- Create new enhancers lists using ENCODE ChromHMM/DNase-seq data
-- Process [ENCODE ChIA-PET](https://www.encodeproject.org/search/?type=Experiment&assay_term_name=ChIA-PET) data using [Mango](https://github.com/dphansti/mango) / download other processed ChIA-PET data from other sources
-- Use processed ChIA-PET data to link enhancers to genes
+- Create new enhancers lists using ENCODE ChromHMM tracks, ENCODE DNase-seq data for 125 cell lines, FANTOM5 permissive enhancers, and Thurman et al DHSs from ~75 cell lines.
+- Process [ENCODE ChIA-PET](https://www.encodeproject.org/search/?type=Experiment&assay_term_name=ChIA-PET) data using [Mango](https://github.com/dphansti/mango) / download other processed ChIA-PET data from other sources. Heming has added code to find particular orientations of CTCF motifs.
+- Use processed ChIA-PET data, FANTOM5 associations, or THurman et al associations to link enhancers to genes
 - Evaluate how well different enhancer lists capture ENCODE ChIP-seq peaks
 - Run chipenrich using different enhancer lists and compare the resulting p-values
 
@@ -34,28 +34,45 @@ My scripts assume that there are no headers in these files.
 # Instructions
 ## Download public data
 You'll need to start by downloading some public datasets (ENCODE ChIP-seq, ChromHMM tracks, and master DNase).  You can do this from this directory by running:
+```
+	# Gets data from UCSC Genome Browser (DHSs, chromHMM), Thurman et al, FANTOM5,
+	# and chipenrich.data. Data are deposited in the data/ folder
+	make download_data
+```
 
-	make chipseq # To fetch ENCODE chip-seq data
-	make dnase # To fetch ENCODE master DNase data
-	make chromhmm # To fetch the ~9 cell types with ChromHMM results on ENCODE
+Some notes:
+
+* chromHMM files are concatenated into a single file and the individual ones are deleted
+* FANTOM5 files have their initial rows (as needed) removed
+* The 5kb locus definition is extracted from `chipenrich.data` with version at least `1.99.8`.
 
 ## Generate enhancer lists
 Once these have been downloaded, you can generate enhancer lists:
 
 	cd new_enhancer_lists
-	make enhancer_lists
+	make
 	cd ..
 
 You'll likely need to change the path at the top of the ```commands``` file in order for this to work, as I've set it for my own home path.  This will be the case in every commands file in other directories as well.
 
-As it is now, this will generate four different enhancer lists:
+As it is now, this will generate the following enhancer lists in `new_enhancer_lists` for no extension, and another for 1000bp extension:
 
-- One list based on the ChromHMM enhancers alone
-- One list based on the ChromHMM enhancers alone, extending enhancers less than 2kb in length to 2kb
-- One list based on the ChromHMM enhancers unioned with the DNase regions (requiring that a DNase region shows up in at least 2 samples)
-- One list based on the ChromHMM enhancers unioned with the DNase regions (requiring that a DNase region shows up in at least 2 samples), and extending enhancers less than 2kb in length to 2kb
+```
+    Var1     Var2   Var3    Var4
+2  dnase     <NA>   <NA>    <NA>
+3   <NA> chromhmm   <NA>    <NA>
+4  dnase chromhmm   <NA>    <NA>
+5   <NA>     <NA> fantom    <NA>
+6  dnase     <NA> fantom    <NA>
+7   <NA> chromhmm fantom    <NA>
+8  dnase chromhmm fantom    <NA>
+9   <NA>     <NA>   <NA> thurman
+11  <NA> chromhmm   <NA> thurman
+13  <NA>     <NA> fantom thurman
+15  <NA> chromhmm fantom thurman
+```
 
-Enhancers overlapping with the gene list (gene list is in current_definitions/genes.txt) are kicked out of the enhancer list.
+Enhancers overlapping with the 5kb locus definition from `chipenrich.data` (`data/genes/chipenrich_5kb_locusdef.txt`) are removed.
 
 ## Gather ChIA-PET interaction data
 Next you need to make sure that you have ChIA-PET interaction lists (simple text files listing the significantly interacting regions based on ChIA-PET data).  I've included all of the ones I've used in the ```interaction_lists``` directory (all files ending with \*interactions), so if you don't want to change anything then you can skip this step.  If you'd like to add new interactions files, just add them to this directory (with the file name following the format 'experiment_name.interactions') and they'll be included in the downstream processing (also make sure to add the experiment(s) to the ```experiment_info.txt``` file in the ```new_locus_lists``` directory -- explained later).
