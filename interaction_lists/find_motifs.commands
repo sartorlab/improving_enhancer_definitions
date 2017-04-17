@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for file in `ls *interactions`
+do
+	Rscript ../scripts/motif_scanning.R --input ${file} --pwm ../data/motif/MA0139.1.pfm
+done

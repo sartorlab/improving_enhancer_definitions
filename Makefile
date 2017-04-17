@@ -1,6 +1,6 @@
 ### For data downloads:
 
-download_data : dnase chromhmm thurman fantom ldef
+download_data : dnase chromhmm thurman fantom ldef motif
 
 dnase : ./data/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz
 ./data/ENCODE_dnase/wgEncodeAwgDnaseMasterSites.bed.gz :
@@ -25,3 +25,11 @@ fantom : ./data/fantom/enhancer_tss_associations.bed
 ldef : ./data/genes/chipenrich_5kb_locusdef.txt
 ./data/genes/chipenrich_5kb_locusdef.txt :
 	mkdir -p ./data/genes && cd ./data/genes && Rscript ../../scripts/extract_5kb_ldef.R
+
+# Use what Heming had downloaded from what was supposed to be the same location
+# NOTE: Her version does not match the website http://jaspar.genereg.net/?ID=MA0139.1&rm=present&collection=CORE
+# exactly for some reason, and downloading it fresh does not work because the column
+# sums are not all the same. NO CLUE!
+# motif : ./data/motif/MA0139.1.pfm
+# ./data/motif/MA0139.1.pfm :
+# 	mkdir -p ./data/motif/ && cd ./data/motif && bash ../../scripts/public_data_download/CTCF_motif_download.sh
