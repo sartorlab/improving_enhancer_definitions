@@ -4,10 +4,10 @@ ruan_2015:
 motifs:
 	bash find_motifs.commands
 
-thurman: dnase_thurman.interactions.gz
-dnase_thurman.interactions.gz :
+thurman: thurman.interactions
+thurman.interactions :
 	bash ../scripts/extract_thurman_interactions.sh
 
-fantom: fantom.interactions.gz
-fantom.interactions.gz :
+fantom: fantom.interactions
+fantom.interactions :
 	bash ../scripts/extract_fantom_interactions.sh
