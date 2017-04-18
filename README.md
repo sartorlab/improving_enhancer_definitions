@@ -74,20 +74,48 @@ As it is now, this will generate the following enhancer lists in `new_enhancer_l
 
 Enhancers overlapping with the 5kb locus definition from `chipenrich.data` (`data/genes/chipenrich_5kb_locusdef.txt`) are removed.
 
-## Gather ChIA-PET interaction data
+## Generate interaction lists
+
+### ChIA-PET interaction data
 Next you need to make sure that you have ChIA-PET interaction lists (simple text files listing the significantly interacting regions based on ChIA-PET data).  I've included all of the ones I've used in the ```interaction_lists``` directory (all files ending with \*interactions), so if you don't want to change anything then you can skip this step.  If you'd like to add new interactions files, just add them to this directory (with the file name following the format 'experiment_name.interactions') and they'll be included in the downstream processing (also make sure to add the experiment(s) to the ```experiment_info.txt``` file in the ```new_locus_lists``` directory -- explained later).
 
 The files in the ```interaction_lists``` directory are from three sources:
 - The files starting with "EN" (e.g., ```ENCSR000CAD.interactions```) are from ENCODE ChIA-PET data and have been processed with Mango (v. 1.1.7).  To recreate the processing pipelines for these files, go into the ```mango_pipelines``` directory and run:
 
-		make prepare_workspace
-		make ENCODE_pipelines
+```
+make prepare_workspace
+make ENCODE_pipelines
+```
 
 then you can run the resulting ```*.pipeline``` files individually with bash.
 - The files ```ruan_2015*.interactions``` are from [this](http://www.ncbi.nlm.nih.gov/pubmed/26686651) publication.  I've simply downloaded their supplementary data; you can download the data again using the script ```interaction_lists/ruan_2015_data.sh```.  This data was __not__ processed using Mango, but rather with another method that (by the look of it) isn't as statistically stringent as Mango would be.
 - The files ```naive_hesc.interactions``` and ```primed_hesc.interactions``` are from [this](doi:10.1016/j.stem.2015.11.007) publication.  They ran an earlier version of Mango on their data and the results are included in their supplementary files (as Excel files).  I downloaded these, converted them to text files, and included them in this repository.  It should be noted that although these were processed by the authors using Mango, it was an earlier version that I believe wasn't yet optimized for the protocol that they used; therefore, processing them with a newer version of Mango will give different results.
 
 The number of interactions per experiment are in the spreadsheet [here](https://docs.google.com/a/umich.edu/spreadsheets/d/13h4WubwexHCBToSYIgumvLkR6S0gIuvcyubQYzyZSm0/edit?usp=sharing)
+
+Once the ChIA-PET pipelines are finished, various `.interactions` files will be created.
+
+### Checking for convergent CTCF motifs in ChIA-PET
+
+```
+cd mango_pipelines
+cd interaction_lists
+make motifs
+```
+
+### Thurman
+
+```
+cd interaction_lists
+make thurman
+```
+
+### FANTOM
+
+```
+cd interaction_lists
+make fantom
+```
 
 ## Link enhancers to genes
 
