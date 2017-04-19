@@ -46,8 +46,6 @@ thurman_pool = c(NA, 'thurman')
 combinations = expand.grid(dnase_pool, chromhmm_pool, fantom_pool, thurman_pool, stringsAsFactors=F)
 # Get rid of all NA
 combinations = combinations[!apply(combinations, 1, function(row){all(is.na(row))}),]
-# Get rid of combinations with dnase and thurman
-combinations = combinations[!apply(combinations, 1, function(row){'dnase' %in% row && 'thurman' %in% row}), ]
 
 #####  LOAD ENHANCER COMPONENTS  #####
 # load in the chromhmm data for all the tissues
@@ -77,6 +75,12 @@ colnames(thurman) = c('promoter.chromosome', 'promoter.start', 'promoter.end', '
 thurman = thurman[, c('distal.chromosome', 'distal.start', 'distal.end')]
 colnames(thurman) = c('chromosome', 'start', 'end')
 
+if (opts$extension == 1) {
+  extension = 0
+} else {
+  extension = opts$extension
+}
+
 #####  BUILD THE COMBINATIONS  #####
 for(i in 1:nrow(combinations)) {
   dnase_code = combinations[i,1]
@@ -84,33 +88,49 @@ for(i in 1:nrow(combinations)) {
   fantom_code = combinations[i,3]
   thurman_code = combinations[i,4]
 
-  message(sprintf('On %s %s %s %s %s', dnase_code, chromhmm_code, fantom_code, thurman_code, opts$extension))
+  out_code = c()
+  if(!is.na(chromhmm_code)) {
+    out_code = c(out_code, chromhmm_code)
+  }
+  if(!is.na(dnase_code)) {
+    out_code = c(out_code, dnase_code)
+  }
+  if(!is.na(thurman_code)) {
+    out_code = c(out_code, thurman_code)
+  }
+  if(!is.na(fantom_code)) {
+    out_code = c(out_code, fantom_code)
+  }
+
+  out_file = paste(paste(out_code, collapse = '_'), extension, 'enhancers', 'gz', sep = '.')
+
+  message(sprintf('On %s', out_file))
+
+  if(file.exists(out_file)) {
+    message('File exists, skipping...')
+    next
+  }
 
   enhancers_df = data.frame()
-  out_code = c()
 
   if (!is.na(chromhmm_code)) {
     message('Adding chromhmm')
     enhancers_df = rbind(enhancers_df, chromhmm)
-    out_code = c(out_code, chromhmm_code)
   }
 
   if (!is.na(dnase_code)) {
     message('Adding dnase')
     enhancers_df = rbind(enhancers_df, dnase[,c("chromosome", "start", "end")])
-    out_code = c(out_code, dnase_code)
   }
 
   if (!is.na(thurman_code)) {
     message('Adding thurman')
     enhancers_df = rbind(enhancers_df, thurman)
-    out_code = c(out_code, thurman_code)
   }
 
   if (!is.na(fantom_code)) {
     message('Adding fantom')
     enhancers_df = rbind(enhancers_df, fantom)
-    out_code = c(out_code, fantom_code)
   }
 
   enhancers_gr = makeGRangesFromDataFrame(enhancers_df)
@@ -124,14 +144,6 @@ for(i in 1:nrow(combinations)) {
 
   enhancers_df = as.data.frame(enhancers_merged)
   enhancers_df = enhancers_df[order(enhancers_df$seqnames, enhancers_df$start), ]
-
-  if (opts$extension == 1) {
-    extension = 0
-  } else {
-    extension = opts$extension
-  }
-
-  out_file = paste(paste(out_code, collapse = '_'), extension, 'enhancers', 'gz', sep = '.')
 
   message(sprintf('Writing %s', out_file))
   write.table(enhancers_df[,c("seqnames", "start", "end")], file = gzfile(out_file), quote = F, sep = "\t", row.names = F, col.names = F)
