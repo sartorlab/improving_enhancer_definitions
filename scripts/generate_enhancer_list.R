@@ -2,12 +2,11 @@ suppressPackageStartupMessages(library("optparse"))
 
 option_list = list(
   make_option(c("--genes"), action = "store", type = "character", help = "[Required] Path to a file listing the genomic intervals that should be assigned to each gene.  Format is one line per locus, tab-separated, chromosome, start, end, gene_id (no header)"),
-  make_option(c("--dnase"), action = "store", type = "character", help = "[Optional] Path to a file listing the enhancers.  Format is one line per locus, tab-separated, chromosome, start, end, enhancer_id (no header)"),
-  make_option(c("--tissue_threshold_dnase"), action = "store", type = "numeric", default = 1, help = "[Optional] An integer.  If the DNase list is used to create the enhancer list, then only DNase sites supported by this number of experiments are included.  There are ~125 experiments in the ENCODE DNase list (Default: 1)."),
   make_option(c("--chromhmm"), action = "store", type = "character", help = "[Optional] File of concatenated chromHMM tracks"),
-  make_option(c("--fantom"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers from the FANTOM5 consortium."),
+  make_option(c("--dnase"), action = "store", type = "character", help = "[Optional] Path to a file listing the enhancers.  Format is one line per locus, tab-separated, chromosome, start, end, enhancer_id (no header)"),
   make_option(c("--thurman"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers (and interactions) from Thurman et al. paper."),
-  make_option(c("--extension"), action = "store", type = "numeric", help = "[Required] Number of base pairs to extend enhancers to")
+  make_option(c("--fantom"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers from the FANTOM5 consortium."),
+  make_option(c("--extension"), action = "store", type = "numeric", help = "[Required] Number of base pairs to extend enhancers to"),  make_option(c("--tissue_threshold_dnase"), action = "store", type = "numeric", default = 1, help = "[Optional] An integer.  If the DNase list is used to create the enhancer list, then only DNase sites supported by this number of experiments are included.  There are ~125 experiments in the ENCODE DNase list (Default: 1).")
 )
 
 option_parser = OptionParser(usage = "usage: Rscript %prog [options]", option_list = option_list, add_help_option = T,
@@ -38,12 +37,12 @@ colnames(genes) = c("chromosome", "start", "end", "gene_id", "symbol")
 genes_gr = makeGRangesFromDataFrame(df = genes, seqnames.field = "chromosome", start.field = "start", end.field = "end")
 
 #####  DETERMINE COMBINATIONS  #####
-dnase_pool = c(NA, 'dnase')
 chromhmm_pool = c(NA, 'chromhmm')
-fantom_pool = c(NA, 'fantom')
+dnase_pool = c(NA, 'dnase')
 thurman_pool = c(NA, 'thurman')
+fantom_pool = c(NA, 'fantom')
 
-combinations = expand.grid(dnase_pool, chromhmm_pool, fantom_pool, thurman_pool, stringsAsFactors=F)
+combinations = expand.grid(chromhmm_pool, dnase_pool, thurman_pool, fantom_pool, stringsAsFactors=F)
 # Get rid of all NA
 combinations = combinations[!apply(combinations, 1, function(row){all(is.na(row))}),]
 
@@ -83,10 +82,10 @@ if (opts$extension == 1) {
 
 #####  BUILD THE COMBINATIONS  #####
 for(i in 1:nrow(combinations)) {
-  dnase_code = combinations[i,1]
-  chromhmm_code = combinations[i,2]
-  fantom_code = combinations[i,3]
-  thurman_code = combinations[i,4]
+  chromhmm_code = combinations[i,1]
+  dnase_code = combinations[i,2]
+  thurman_code = combinations[i,3]
+  fantom_code = combinations[i,4]
 
   out_code = c()
   if(!is.na(chromhmm_code)) {
