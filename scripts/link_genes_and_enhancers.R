@@ -9,7 +9,7 @@ option_list <- list(
     make_option(c("--max_genes_per_region"), action = "store", type = "numeric", help = "[Optional] Ignored unless --method = 'encompassing'.  If this is the case, then gene-enhancer pairs are not assigned within regions (e.g. TADs) that encompass more than max_genes_per_region (default = no threshold)")
   )
 
-option_parser <- OptionParser(usage = "usage: Rscript %prog [options]", option_list = option_list, add_help_option = T, 
+option_parser <- OptionParser(usage = "usage: Rscript %prog [options]", option_list = option_list, add_help_option = T,
                               description = "\nDescription: Accepts a list of gene loci, enhancers, and an interaction dataset (e.g., ChIA-PET or Hi-C).  Prints a list of gene-enhancer pairs. Generates this list using one of two methods: either by finding the interactions that link one gene to one enhancer (each end of the interaction overlaps with one of the genes/enhancers; 'point_to_point') or by declaring all gene/enhancer pairs encompassed WITHIN an interaction region to be interacting ('encompassing'; useful when e.g. enhancers/genes are expected to be within the loops rather than at the interaction edges, such as would be expected within a TAD).")
 opts <- parse_args(option_parser)
 
@@ -39,142 +39,109 @@ if (length(opts$max_genes_per_region) > 0 & opts$method == "point_to_point") {
 
 #####  LOAD THE REST OF THE LIBRARIES  #####
 suppressPackageStartupMessages(library("GenomicRanges"))
-suppressPackageStartupMessages(library("plyr"))
-suppressPackageStartupMessages(library("hash"))
 
 
 #####  MAIN  #####
+message(sprintf('Building %s...', opts$out))
 
-# read in the genes loci
-genes <- read.table(opts$gene_loci, head = F, as.is = T, sep = '\t')
-colnames(genes) <- c("chromosome", "start", "end", "gene_id")
+###
+message('Reading genes...')
+genes = read.table(opts$gene_loci, sep='\t', header = F, as.is = T)
+colnames(genes) = c('chr','start','end','gene_id','symbol')
 
-# read in the list of enhancers
-enhancers <- read.table(opts$enhancers, head = F, as.is = T, sep = '\t')
-colnames(enhancers) <- c("chromosome", "start", "end")
-enhancers$enhancer_id <- paste(enhancers$chromosome, enhancers$start, enhancers$end, sep = ':')
+genes_gr = GenomicRanges::makeGRangesFromDataFrame(df = genes, keep.extra.columns = T)
 
-# read in the interactions
-interactions <- read.table(opts$interactions, head = F, as.is = T, sep = '\t')
-colnames(interactions) <- c("chromosome_1", "start_1", "end_1", "chromosome_2", "start_2", "end_2")
-interactions$region_id_1 <- paste(interactions$chromosome_1, interactions$start_1, interactions$end_1, sep = ':')
-interactions$region_id_2 <- paste(interactions$chromosome_2, interactions$start_2, interactions$end_2, sep = ':')
+###
+message(sprintf('Reading %s...', opts$enhancers))
+enhancers = read.table(opts$enhancers, sep = '\t', header = F, as.is = T)
+colnames(enhancers) = c('chr','start','end')
 
-# only interested in intra-chromosomal interactions
-interactions <- interactions[interactions$chromosome_1==interactions$chromosome_2,]
+enhancers_gr = GenomicRanges::makeGRangesFromDataFrame(df = enhancers)
 
+###
+message(sprintf('Reading %s...', opts$interactions))
+interactions = read.table(opts$interactions, sep='\t', header = F, as.is = T)
+colnames(interactions) = c('chrom1','start1','end1','chrom2','start2','end2')
+interactions = interactions[interactions$chrom1 == interactions$chrom2,]
 
 if (opts$method == "point_to_point") {
-  # generate the entire list of interaction regions
-  first_interaction_regions <- interactions[,c("chromosome_1", "start_1", "end_1", "region_id_1")]
-  second_interaction_regions <- interactions[,c("chromosome_2", "start_2", "end_2", "region_id_2")]
-  colnames(first_interaction_regions) <- c("chromosome", "start", "end", "region_id")
-  colnames(second_interaction_regions) <- c("chromosome", "start", "end", "region_id")
-  interaction_regions <- rbind(first_interaction_regions, second_interaction_regions)
-  interaction_regions <- unique(interaction_regions)
-  interaction_regions <- as.data.frame(interaction_regions) 
-  
-  # find the interaction regions that overlap with genes
-  interaction_regions.range <- makeGRangesFromDataFrame(df = interaction_regions, seqnames.field = "chromosome", start.field = "start", end.field = "end")
-  genes.range <- makeGRangesFromDataFrame(df = genes, seqnames.field = "chromosome", start.field = "start", end.field = "end")
-  gene_interaction.overlaps <- findOverlaps(genes.range, interaction_regions.range)
-  gene_interaction.overlaps <- cbind(genes[queryHits(gene_interaction.overlaps),"gene_id"], interaction_regions[subjectHits(gene_interaction.overlaps),"region_id"])
-  gene_interaction.overlaps <- as.data.frame(gene_interaction.overlaps, stringsAsFactors = F)
-  colnames(gene_interaction.overlaps) <- c("gene_id", "region_id")
-  gene_interaction.overlaps <- unique(gene_interaction.overlaps)
-  
-  
-  # find the interaction edges that overlap with enhancers
-  interaction_regions.range <- makeGRangesFromDataFrame(df = interaction_regions, seqnames.field = "chromosome", start.field = "start", end.field = "end")
-  enhancers.range <- makeGRangesFromDataFrame(df = enhancers, seqnames.field = "chromosome", start.field = "start", end.field = "end")
-  enhancer_interaction.overlaps <- findOverlaps(enhancers.range, interaction_regions.range)
-  enhancer_interaction.overlaps <- cbind(enhancers[queryHits(enhancer_interaction.overlaps),"enhancer_id"], interaction_regions[subjectHits(enhancer_interaction.overlaps),"region_id"])
-  enhancer_interaction.overlaps <- as.data.frame(enhancer_interaction.overlaps, stringsAsFactors = F)
-  colnames(enhancer_interaction.overlaps) <- c("enhancer_id", "region_id")
-  enhancer_interaction.overlaps <- unique(enhancer_interaction.overlaps)
-  
-  # now assign the gene-enhancer interactions based on the above overlaps
-  
-  # populate hash, gene_interactions[["region_id"]] --> c(genes_overlapping_this_region)
-  gene_interactions <- hash(keys = gene_interaction.overlaps$region_id)
-  for(i in seq(1, nrow(gene_interaction.overlaps))){
-    gene_interactions[[gene_interaction.overlaps$region_id[i]]] <- c(gene_interactions[[gene_interaction.overlaps$region_id[i]]], gene_interaction.overlaps$gene_id[i])
-  }
-  
-  # populate hash, enhancer_interactions[["region_id"]] --> c(enhancers_overlapping_this_region)
-  enhancer_interactions <- hash(keys = enhancer_interaction.overlaps$region_id)
-  for(i in seq(1, nrow(enhancer_interaction.overlaps))){
-    enhancer_interactions[[enhancer_interaction.overlaps$region_id[i]]] <- c(enhancer_interactions[[enhancer_interaction.overlaps$region_id[i]]], enhancer_interaction.overlaps$enhancer_id[i])
-  }
-  
-  gene_in_pair <- c()
-  enhancer_in_pair <- c()
-  
-  for(row in seq(1, nrow(interactions))) {
-    first_region_id <- interactions$region_id_1[row]
-    second_region_id <- interactions$region_id_2[row]
-    if (has.key(first_region_id, gene_interactions) & has.key(second_region_id, enhancer_interactions)) {
-      for(gene in gene_interactions[[first_region_id]]){
-        for(enhancer in enhancer_interactions[[second_region_id]]){
-          gene_in_pair <- c(gene_in_pair, gene)
-          enhancer_in_pair <- c(enhancer_in_pair, enhancer)
-        }
-      }
-    }
-    
-    if (has.key(second_region_id, gene_interactions) & has.key(first_region_id, enhancer_interactions)) {
-      for(gene in gene_interactions[[second_region_id]]){
-        for(enhancer in enhancer_interactions[[first_region_id]]){
-          gene_in_pair <- c(gene_in_pair, gene)
-          enhancer_in_pair <- c(enhancer_in_pair, enhancer)
-        }
-      }
-    }
-  }
-  
-  gene_enhancer_pairs <- data.frame(gene=gene_in_pair, enhancer=enhancer_in_pair)
-  write.table(x = gene_enhancer_pairs, file = opts$out, append = F, quote = F, sep = "\t", row.names = F, col.names = T)
+
+  message('Building P2P pairs...')
+  ###
+  interactions1_gr = GenomicRanges::makeGRangesFromDataFrame(df = interactions, seqnames.field='chrom1', start.field='start1', end.field='end1')
+  interactions2_gr = GenomicRanges::makeGRangesFromDataFrame(df = interactions, seqnames.field='chrom2', start.field='start2', end.field='end2')
+
+  ###
+  genes_interactions1 = as.data.frame(GenomicRanges::findOverlaps(genes_gr, interactions1_gr))
+  genes_interactions2 = as.data.frame(GenomicRanges::findOverlaps(genes_gr, interactions2_gr))
+
+  enhancers_interactions1 = as.data.frame(GenomicRanges::findOverlaps(enhancers_gr, interactions1_gr))
+  enhancers_interactions2 = as.data.frame(GenomicRanges::findOverlaps(enhancers_gr, interactions2_gr))
+
+  ###
+  # The indices for the subjectHits are the same. Require enhancer / gene or gene / enhancer
+  # overlap in interactions1_gr and interactions2_gr, respectively
+  idx1 = merge(genes_interactions1, enhancers_interactions2, by = 'subjectHits', suffixes= c('.genes','.enh'))
+  idx2 = merge(genes_interactions2, enhancers_interactions1, by = 'subjectHits', suffixes= c('.genes','.enh'))
+
+  ###
+  loci1_gr = enhancers_gr[idx1$queryHits.enh]
+  loci1_gr$gene_id = genes_gr$gene_id[idx1$queryHits.genes]
+  loci1_gr$symbol = genes_gr$symbol[idx1$queryHits.genes]
+
+  loci2_gr = enhancers_gr[idx2$queryHits.enh]
+  loci2_gr$gene_id = genes_gr$gene_id[idx2$queryHits.genes]
+  loci2_gr$symbol = genes_gr$symbol[idx2$queryHits.genes]
+
+  loci_gr = sort(c(loci1_gr, loci2_gr))
+  loci_gr = unique(loci_gr)
+
+  loci_df = as.data.frame(loci_gr)
+  colnames(loci_df) = c('chr','start','end','width','strand','gene_id','symbol')
+
+  loci_df = loci_df[,c('chr','start','end','gene_id','symbol')]
+
+  write.table(x = loci_df, file = opts$out, append = F, quote = F, sep = "\t", row.names = F, col.names = T)
 
 } else if (opts$method == "encompassing") {
-  
-  interactions$region_chromosome <- interactions$chromosome_1
-  interactions$region_start <- apply(interactions[,c("start_1", "start_2")], 1, function(x){min(x)})
-  interactions$region_end <- apply(interactions[,c("end_1", "end_2")], 1, function(x){max(x)})
-  interactions$region_id <- paste(interactions$region_chromosome, interactions$region_start, interactions$region_end, sep=":")
-  
-  # find the genes overlapping each region 
-  interaction_regions.range <- makeGRangesFromDataFrame(df = interactions[,c("region_chromosome", "region_start", "region_end")], seqnames.field = "region_chromosome", start.field = "region_start", end.field = "region_end")
-  genes.range <- makeGRangesFromDataFrame(df = genes, seqnames.field = "chromosome", start.field = "start", end.field = "end")
-  gene_interaction.overlaps <- findOverlaps(genes.range, interaction_regions.range)
-  gene_interaction.overlaps <- cbind(genes[queryHits(gene_interaction.overlaps),"gene_id"], interactions[subjectHits(gene_interaction.overlaps),"region_id"])
-  gene_interaction.overlaps <- as.data.frame(gene_interaction.overlaps, stringsAsFactors = F)
-  colnames(gene_interaction.overlaps) <- c("gene_id", "region_id")
-  gene_interaction.overlaps <- unique(gene_interaction.overlaps)
-  
-  if (length(opts$max_genes_per_region) > 0) {
-    # a threshold has been set for the maximum number of genes per region
-    number_genes_per_region <- table(gene_interaction.overlaps$region_id)
-    exclude <- names(number_genes_per_region[number_genes_per_region>opts$max_genes_per_region])
-    gene_interaction.overlaps <- gene_interaction.overlaps[!gene_interaction.overlaps$region_id %in% exclude,]
-  }
-  
-  
-  # find the enhancers overlapping each region
-  interaction_regions.range <- makeGRangesFromDataFrame(df = interactions[,c("region_chromosome", "region_start", "region_end")], seqnames.field = "region_chromosome", start.field = "region_start", end.field = "region_end")
-  enhancers.range <- makeGRangesFromDataFrame(df = enhancers, seqnames.field = "chromosome", start.field = "start", end.field = "end")
-  enhancer_interaction.overlaps <- findOverlaps(enhancers.range, interaction_regions.range)
-  enhancer_interaction.overlaps <- cbind(enhancers[queryHits(enhancer_interaction.overlaps),"enhancer_id"], interactions[subjectHits(enhancer_interaction.overlaps),"region_id"])
-  enhancer_interaction.overlaps <- as.data.frame(enhancer_interaction.overlaps, stringsAsFactors = F)
-  colnames(enhancer_interaction.overlaps) <- c("enhancer_id", "region_id")
-  enhancer_interaction.overlaps <- unique(enhancer_interaction.overlaps)
-  
-  
-  # now assign the gene-enhancer interactions based on the above overlaps
-  gene_enhancer_pairs <- join(gene_interaction.overlaps, enhancer_interaction.overlaps)
-  gene_enhancer_pairs <- gene_enhancer_pairs[!is.na(gene_enhancer_pairs$enhancer_id),]  
-  gene_enhancer_pairs <- gene_enhancer_pairs[,c("gene_id", "enhancer_id")]
-  gene_enhancer_pairs <- unique(gene_enhancer_pairs)
-  
-  write.table(x = gene_enhancer_pairs, file = opts$out, append = F, quote = F, sep = "\t", row.names = F, col.names = F)
-}
 
+  message('Building E pairs...')
+  # Create the loops from start to start
+  loops_gr = GenomicRanges::GRanges(
+  	seqnames = interactions$chrom1,
+  	ranges = IRanges::IRanges(start = interactions$start1, end = interactions$start2)
+  )
+
+  ###
+  genes_in_loops = as.data.frame(GenomicRanges::findOverlaps(genes_gr, loops_gr, type = 'within'))
+  enhancers_in_loops = as.data.frame(GenomicRanges::findOverlaps(enhancers_gr, loops_gr, type = 'within'))
+
+  ###
+  # Each subjectHit index represents a loop. Use table to count how many genes fall in each loop
+  num_genes_in_loops = table(genes_in_loops$subjectHits)
+
+  valid_loop_idx = names(num_genes_in_loops[num_genes_in_loops <= opts$max_genes_per_region])
+
+  ###
+  genes_in_loops = subset(genes_in_loops, subjectHits %in% valid_loop_idx)
+  enhancers_in_loops = subset(enhancers_in_loops, subjectHits %in% valid_loop_idx)
+
+  ###
+
+  idx = merge(genes_in_loops, enhancers_in_loops, by = 'subjectHits', suffixes = c('.genes', '.enh'))
+
+  ###
+  loci_gr = enhancers_gr[idx$queryHits.enh]
+  loci_gr$gene_id = genes_gr$gene_id[idx$queryHits.genes]
+  loci_gr$symbol = genes_gr$symbol[idx$queryHits.genes]
+
+  loci_gr = sort(loci_gr)
+  loci_gr = unique(loci_gr)
+
+  loci_df = as.data.frame(loci_gr)
+  colnames(loci_df) = c('chr','start','end','width','strand','gene_id','symbol')
+
+  loci_df = loci_df[,c('chr','start','end','gene_id','symbol')]
+
+  write.table(x = loci_df, file = opts$out, append = F, quote = F, sep = "\t", row.names = F, col.names = T)
+}
