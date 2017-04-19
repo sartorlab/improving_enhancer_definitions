@@ -1,0 +1,6 @@
+*.enhancers.gz
+*.interactions.with_motif
+*.final_interactions
+*.pairs
+*.ldef
+*.pipeline
