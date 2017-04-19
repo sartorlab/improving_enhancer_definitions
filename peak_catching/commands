@@ -21,7 +21,7 @@ cut -f1-3 $CURRENT_GENE_LIST | perl -pe 's/$/\tgene/' > current.txt
 cat $CURRENT_ENHANCER_LIST | perl -pe 's/$/\tenhancer/' >> current.txt
 
 ### Make the locus list for the new enhancer lists, ignoring whether or not an enhancer can be assigned to a gene
-for i in `ls ${ROOT_DIR}/new_enhancer_lists/*enhancers`
+for i in `ls ${ROOT_DIR}/enhancer_lists/*enhancers`
 do
 	bn=$(basename $i | perl -pe 's/\.enhancers//')
 	cut -f1-3 $CURRENT_GENE_LIST | perl -pe 's/$/\tgene/' > ${bn}.no_assignment.txt
@@ -29,7 +29,7 @@ do
 done
 
 ### Make the locus list for the new enhancer lists, taking only the enhancers that have been assigned to genes (i.e., are in the *pairs files)
-for i in `ls ${ROOT_DIR}/new_locus_lists/*all*.pairs`
+for i in `ls ${ROOT_DIR}/pair_lists/*all*.pairs`
 do
 	bn=$(basename $i | perl -pe 's/\.all//; s/\.pairs$//')
 	cut -f1-3 $CURRENT_GENE_LIST | perl -pe 's/$/\tgene/' > ${bn}.assignment.txt

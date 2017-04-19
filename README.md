@@ -49,13 +49,13 @@ Some notes:
 ## Generate enhancer lists
 Once these have been downloaded, you can generate enhancer lists:
 
-	cd new_enhancer_lists
+	cd enhancer_lists
 	make
 	cd ..
 
 You'll likely need to change the path at the top of the ```commands``` file in order for this to work, as I've set it for my own home path.  This will be the case in every commands file in other directories as well.
 
-As it is now, this will generate the following enhancer lists in `new_enhancer_lists` for no extension, and another for 1000bp extension:
+As it is now, this will generate the following enhancer lists in `enhancer_lists` for no extension, and another for 1000bp extension:
 
 ```
     Var1     Var2   Var3    Var4
@@ -77,7 +77,7 @@ Enhancers overlapping with the 5kb locus definition from `chipenrich.data` (`dat
 ## Generate interaction lists
 
 ### ChIA-PET interaction data
-Next you need to make sure that you have ChIA-PET interaction lists (simple text files listing the significantly interacting regions based on ChIA-PET data).  I've included all of the ones I've used in the ```interaction_lists``` directory (all files ending with \*interactions), so if you don't want to change anything then you can skip this step.  If you'd like to add new interactions files, just add them to this directory (with the file name following the format 'experiment_name.interactions') and they'll be included in the downstream processing (also make sure to add the experiment(s) to the ```experiment_info.txt``` file in the ```new_locus_lists``` directory -- explained later).
+Next you need to make sure that you have ChIA-PET interaction lists (simple text files listing the significantly interacting regions based on ChIA-PET data).  I've included all of the ones I've used in the ```interaction_lists``` directory (all files ending with \*interactions), so if you don't want to change anything then you can skip this step.  If you'd like to add new interactions files, just add them to this directory (with the file name following the format 'experiment_name.interactions') and they'll be included in the downstream processing (also make sure to add the experiment(s) to the ```experiment_info.txt``` file in the ```pair_lists``` directory -- explained later).
 
 The files in the ```interaction_lists``` directory are from three sources:
 - The files starting with "EN" (e.g., ```ENCSR000CAD.interactions```) are from ENCODE ChIA-PET data and have been processed with Mango (v. 1.1.7).  To recreate the processing pipelines for these files, go into the ```mango_pipelines``` directory and run:
@@ -119,7 +119,7 @@ make fantom
 
 ## Link enhancers to genes
 
-Once the ChIA-PET data is all there, and you've generated the enhancer lists, you can link enhancers to genes.  To do this, ```cd``` into the ```new_locus_lists``` directory and run:
+Once the ChIA-PET data is all there, and you've generated the enhancer lists, you can link enhancers to genes.  To do this, ```cd``` into the ```pair_lists``` directory and run:
 
 	make pipelines
 

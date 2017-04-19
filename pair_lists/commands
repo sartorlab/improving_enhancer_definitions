@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+set -u
+set -o pipefail
+
+# set paths here. Only the ROOT_DIR path should need to be set, as the others are relative to ROOT_DIR
+SCRIPT_DIR="../scripts" # directory where all scripts are kept
+ENHANCER_DIR="../enhancer_lists" # directory that includes the .enhancers.gz files (each line is chrom1, start1, end1)
+INTERACTION_DIR="../interaction_lists" # directory that includes the .interaction files (each line is chrom1, start1, end1, chrom2, start2, end2)
+GENE_LIST="../data/genes/chipenrich_5kb_locusdef.txt" # one gene per line. chromosome, start, end, gene_id
+
+# generate the individual pipeline files
+for enhancer in `ls ${ENHANCER_DIR}/*enhancers.gz`
+do
+	bname_enhancer=$(basename ${enhancer} '.enhancers.gz')
+	for interaction in `ls ${INTERACTION_DIR}/*.final_interactions`
+	do
+		bname_interaction=$(basename ${interaction} '.final_interactions')
+		if [ "${bname_interaction}" == "E" ]
+		then
+			printf "Rscript ${SCRIPT_DIR}/link_genes_and_enhancers.R --gene_loci $GENE_LIST --enhancers ${enhancer} --interactions ${interaction} --method encompassing --max_genes_per_region 1 --out ${bname_enhancer}.${bname_interaction}.pairs\n" >> ${bname_enhancer}.pipeline
+		else
+			printf "Rscript ${SCRIPT_DIR}/link_genes_and_enhancers.R --gene_loci $GENE_LIST --enhancers ${enhancer} --interactions ${interaction} --method point_to_point --out ${bname_enhancer}.${bname_interaction}.pairs\n" >> ${bname_enhancer}.pipeline
+		fi
+	done
+
+	printf "bash ${bname_enhancer}.pipeline\n" >> run_pipelines.pipeline
+done
