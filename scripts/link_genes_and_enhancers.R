@@ -106,10 +106,11 @@ if (opts$method == "point_to_point") {
 } else if (opts$method == "encompassing") {
 
   message('Building E pairs...')
-  # Create the loops from start to start
+  # Create the loops from midpoint to midpoint
+  # Interactions can be quite wide
   loops_gr = GenomicRanges::GRanges(
   	seqnames = interactions$chrom1,
-  	ranges = IRanges::IRanges(start = interactions$start1, end = interactions$start2)
+  	ranges = IRanges::IRanges(start = floor((interactions$start1 + interactions$end1)/2), end = floor((interactions$start2 + interactions$end2)/2))
   )
 
   ###
