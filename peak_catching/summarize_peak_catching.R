@@ -73,7 +73,7 @@ ggsave(filename='peak_catching_compare_chipenrich_findoverlaps.pdf', plot = midp
 
 coverage_comparison = ggplot(data = combined, aes(x = genome_coverage_tingting, y = genome_coverage_raymond), text = paste('ldef:', ldef)) +
     geom_point(alpha=0.5) + xlab('Genome Coverage (old ldef)') + ylab('Genome Coverage (new ldef)')
-ggsave(filename='genome_coverage_comparison.pdf', plot = caught_by_coverage, width=6, height=6)
+ggsave(filename='genome_coverage_comparison.pdf', plot = coverage_comparison, width=6, height=6)
 
 # ggplotly(caught_by_coverage)
 # ggplotly(midpoint_by_findoverlaps)
