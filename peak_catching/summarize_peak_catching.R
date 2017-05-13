@@ -58,7 +58,7 @@ colnames(combined) = c('ldef','mean_chipenrich_caught','genome_coverage_raymond'
 # Write tabular output
 write.table(combined, file='peak_catching_compare_chipenrich_findoverlaps.txt', sep='\t', row.names=F, col.names=T, quote=F)
 
-caught_by_coverage_raymond = ggplot(data = combined, aes(x=mean_chipenrich_caught, y=genome_coverage_raymond, text = paste('ldef:', ldef))) +
+caught_by_coverage_raymond = ggplot(data = peak_catching_ldef, aes(x=mean_chipenrich_caught, y=prop_covered, text = paste('ldef:', ldef))) +
     geom_point(alpha=0.5) + xlab('Peaks Caught (by midpoint)') + ylab('Genome Coverage (Raymond)')
 ggsave(filename='midpoint_peak_catching_genome_coverage_raymond.pdf', plot = caught_by_coverage_raymond, width=6, height=6)
 
@@ -71,10 +71,12 @@ midpoint_by_findoverlaps = ggplot(data = combined, aes(x=mean_chipenrich_caught,
     geom_abline(intercept = 0, slope = 1)
 ggsave(filename='peak_catching_compare_chipenrich_findoverlaps.pdf', plot = midpoint_by_findoverlaps, width=6, height=6)
 
-coverage_comparison = ggplot(data = combined, aes(x = genome_coverage_tingting, y = genome_coverage_raymond), text = paste('ldef:', ldef)) +
+coverage_comparison = ggplot(data = combined, aes(x = genome_coverage_tingting, y = genome_coverage_raymond, text = paste('ldef:', ldef))) +
     geom_point(alpha=0.5) + xlab('Genome Coverage (old ldef)') + ylab('Genome Coverage (new ldef)') +
     geom_abline(intercept = 0, slope = 1)
 ggsave(filename='genome_coverage_comparison.pdf', plot = coverage_comparison, width=6, height=6)
 
-# ggplotly(caught_by_coverage)
-# ggplotly(midpoint_by_findoverlaps)
+ggplotly(caught_by_coverage_raymond)
+ggplotly(caught_by_coverage)
+ggplotly(midpoint_by_findoverlaps)
+ggplotly(coverage_comparison)
