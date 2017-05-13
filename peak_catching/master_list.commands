@@ -1,5 +1,0 @@
-rm -f master_list.txt
-for i in `ls *coverage`
-do
-	cat $i | perl -pe 's/$/\t'${i}'/; s/\.([chromhmm|current])/\t$1/; s/\.no_assignment/\tno_assignment/; s/\.assignment/\tassignment/; s/\.txt.coverage$//' >> master_list.txt
-done
