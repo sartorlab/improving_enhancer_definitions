@@ -1,3 +1,8 @@
+#!/bin/bash
+set -e
+set -u
+set -o pipefail
+
 xargs -a combinations.txt -d '\n' -L 1 -t -P 30 bash peak_catching_xargs.sh
 
 find . -name "*.counts" | xargs -n 10000 cat > num_uniq_peaks_assigned.txt
