@@ -64,31 +64,31 @@ for(base in enhancer_base) {
 			next
 		}
 
-	  if (!is.na(P2P_code)) {
-	    message('Adding P2P')
-	    ldef_gr = c(ldef_gr, base_p2p_gr)
-	  }
+		if (!is.na(P2P_code)) {
+			message('Adding P2P')
+			ldef_gr = c(ldef_gr, base_p2p_gr)
+		}
 
-	  if (!is.na(E_code)) {
-	    message('Adding E')
-	    ldef_gr = c(ldef_gr, base_e_gr)
-	  }
+		if (!is.na(E_code)) {
+			message('Adding E')
+			ldef_gr = c(ldef_gr, base_e_gr)
+		}
 
-	  if (!is.na(thurman_code)) {
-	    message('Adding thurman')
-	    ldef_gr = c(ldef_gr, base_fantom_gr)
-	  }
+		if (!is.na(thurman_code)) {
+			message('Adding thurman')
+			ldef_gr = c(ldef_gr, base_fantom_gr)
+		}
 
-	  if (!is.na(fantom_code)) {
-	    message('Adding fantom')
-	    ldef_gr = c(ldef_gr, base_thurman_gr)
-	  }
+		if (!is.na(fantom_code)) {
+			message('Adding fantom')
+			ldef_gr = c(ldef_gr, base_thurman_gr)
+		}
 
 		message('Reducing...')
 		ldef_gr = sort(ldef_gr)
 		ldef_grl = IRanges::splitAsList(ldef_gr, ldef_gr$gene_id)
 		ldef_grl = GenomicRanges::reduce(ldef_grl)
-		ldef_grl_genes = cds_txname_rle = S4Vectors::Rle(names(ldef_grl), S4Vectors::elementNROWS(ldef_grl))
+		ldef_grl_genes = S4Vectors::Rle(names(ldef_grl), S4Vectors::elementNROWS(ldef_grl))
 
 		ldef_gr = unlist(ldef_grl, use.names = FALSE)
 		ldef_gr$gene_id = ldef_grl_genes
@@ -102,4 +102,41 @@ for(base in enhancer_base) {
 		message(sprintf('Writing %s...', ldef_file))
 		write.table(ldef_df, file = ldef_file, sep = '\t', quote = F, row.names = F, col.names = T)
 	}
+
+	# Go through the enhancer bases again and assign the enhancers to the nearest TSS based on the 5kb definition
+	data('locusdef.hg19.5kb', package='chipenrich.data')
+	fivekb_gr = locusdef.hg19.5kb@granges
+
+	enh_df = read.table(file = sprintf('%s/%s.enhancers.gz', '../enhancer_lists', base), sep='\t', header = F, as.is = T)
+	colnames(enh_df) = c('chr','start','end')
+	enh_gr = GenomicRanges::makeGRangesFromDataFrame(df = enh_df)
+
+	ldef_file = paste(base, 'nearest_tss', 'ldef', sep='.')
+
+	if(file.exists(ldef_file)) {
+		message(sprintf('%s, skipping...', ldef_file))
+		next
+	}
+
+	nearests = nearest(enh_gr, fivekb_gr)
+	ldef_gr = enh_gr
+	mcols(ldef_gr)$gene_id = fivekb_gr[nearests]$gene_id
+
+	message('Reducing...')
+	ldef_gr = sort(ldef_gr)
+	ldef_grl = IRanges::splitAsList(ldef_gr, ldef_gr$gene_id)
+	ldef_grl = GenomicRanges::reduce(ldef_grl)
+	ldef_grl_genes = S4Vectors::Rle(names(ldef_grl), S4Vectors::elementNROWS(ldef_grl))
+
+	ldef_gr = unlist(ldef_grl, use.names = FALSE)
+	ldef_gr$gene_id = ldef_grl_genes
+
+	ldef_gr = sort(ldef_gr)
+
+	ldef_df = BiocGenerics::as.data.frame(ldef_gr)
+	colnames(ldef_df) = c('chr','start','end','width','strand','gene_id')
+	ldef_df = ldef_df[, c('chr','start','end','gene_id')]
+
+	message(sprintf('Writing %s...', ldef_file))
+	write.table(ldef_df, file = ldef_file, sep = '\t', quote = F, row.names = F, col.names = T)
 }
