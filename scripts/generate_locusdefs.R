@@ -118,9 +118,9 @@ for(base in enhancer_base) {
 		next
 	}
 
-	nearests = nearest(enh_gr, fivekb_gr)
+	nearests = GenomicRanges::nearest(enh_gr, fivekb_gr)
 	ldef_gr = enh_gr
-	mcols(ldef_gr)$gene_id = fivekb_gr[nearests]$gene_id
+	GenomicRanges::mcols(ldef_gr)$gene_id = fivekb_gr[nearests]$gene_id
 
 	message('Reducing...')
 	ldef_gr = sort(ldef_gr)
