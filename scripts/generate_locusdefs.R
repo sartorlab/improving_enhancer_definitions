@@ -1,3 +1,5 @@
+library(GenomicRanges)
+
 chromhmm_pool = c(NA, 'chromhmm')
 dnase_pool = c(NA, 'dnase')
 thurman_pool = c(NA, 'thurman')
@@ -103,6 +105,8 @@ for(base in enhancer_base) {
 		write.table(ldef_df, file = ldef_file, sep = '\t', quote = F, row.names = F, col.names = T)
 	}
 
+	dist_within_tss = 500000
+
 	# Go through the enhancer bases again and assign the enhancers to the nearest TSS based on the 5kb definition
 	data('locusdef.hg19.5kb', package='chipenrich.data')
 	fivekb_gr = locusdef.hg19.5kb@granges
@@ -111,16 +115,25 @@ for(base in enhancer_base) {
 	colnames(enh_df) = c('chr','start','end')
 	enh_gr = GenomicRanges::makeGRangesFromDataFrame(df = enh_df)
 
-	ldef_file = paste(base, 'nearest_tss', 'ldef', sep='.')
+	ldef_file = paste(base, sprintf('nearest_tss_%s', format(dist_within_tss, scientific = FALSE)), 'ldef', sep='.')
 
 	if(file.exists(ldef_file)) {
 		message(sprintf('%s, skipping...', ldef_file))
 		next
 	}
 
-	nearests = GenomicRanges::nearest(enh_gr, fivekb_gr)
-	ldef_gr = enh_gr
-	GenomicRanges::mcols(ldef_gr)$gene_id = fivekb_gr[nearests]$gene_id
+	# These return Hits objects, but the queryHits() should have unique indices only
+	nearests = GenomicRanges::nearest(enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
+	distances = GenomicRanges::distanceToNearest(enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
+
+	keep = which(GenomicRanges::mcols(distances)$distance < dist_within_tss)
+
+	if(length(queryHits(nearests)) != length(unique(queryHits(nearests)))) {
+		stop(sprintf('There are ties for nearest 5kb with the enhancer base: %s', base))
+	}
+
+	ldef_gr = enh_gr[queryHits(nearests)[keep]]
+	GenomicRanges::mcols(ldef_gr)$gene_id = fivekb_gr[subjectHits(nearests)[keep]]$gene_id
 
 	message('Reducing...')
 	ldef_gr = sort(ldef_gr)
@@ -140,3 +153,65 @@ for(base in enhancer_base) {
 	message(sprintf('Writing %s...', ldef_file))
 	write.table(ldef_df, file = ldef_file, sep = '\t', quote = F, row.names = F, col.names = T)
 }
+
+# I just want to put this odd occurrence here just in case anyone makes the mistake
+# of thinking that nearest() and distanceToNearest() ignores chromosomes.
+# > ldef_gr
+# GRanges object with 307773 ranges and 1 metadata column:
+#            seqnames                 ranges strand |   gene_id
+#               <Rle>              <IRanges>  <Rle> | <integer>
+#        [1]     chr1         [41081, 43537]      * |    641702
+#        [2]     chr1         [45137, 45537]      * |    641702
+#        [3]     chr1         [46337, 47537]      * |    641702
+#        [4]     chr1         [52737, 53737]      * |     79501
+#        [5]     chr1         [54737, 55137]      * |     79501
+#        ...      ...                    ...    ... .       ...
+#   [307769]     chrX [155246606, 155247006]      * |      3581
+#   [307770]     chrX [155249606, 155251406]      * |      3581
+#   [307771]     chrX [155254606, 155256806]      * |      3581
+#   [307772]     chrX [155257406, 155258206]      * |      3581
+#   [307773]     chrX [155259206, 155259606]      * |      3581
+#   -------
+#   seqinfo: 23 sequences from an unspecified genome; no seqlengths
+# > enh_gr
+# GRanges object with 341715 ranges and 0 metadata columns:
+#            seqnames                 ranges strand
+#               <Rle>              <IRanges>  <Rle>
+#        [1]     chr1         [41081, 43537]      *
+#        [2]     chr1         [45137, 45537]      *
+#        [3]     chr1         [46337, 47537]      *
+#        [4]     chr1         [52737, 53737]      *
+#        [5]     chr1         [54737, 55137]      *
+#        ...      ...                    ...    ...
+#   [341711]     chrX [155246606, 155247006]      *
+#   [341712]     chrX [155249606, 155251406]      *
+#   [341713]     chrX [155254606, 155256806]      *
+#   [341714]     chrX [155257406, 155258206]      *
+#   [341715]     chrX [155259206, 155259606]      *
+#   -------
+#   seqinfo: 23 sequences from an unspecified genome; no seqlengths
+# > fivekb_gr
+# GRanges object with 29436 ranges and 2 metadata columns:
+#           seqnames               ranges strand |   gene_id      symbol
+#              <Rle>            <IRanges>  <Rle> | <integer> <character>
+#       [1]     chr1     [  6874,  14319]      * | 100287102     DDX11L1
+#       [2]     chr1     [ 14320,  33021]      * |    653635      WASH7P
+#       [3]     chr1     [ 33022,  41080]      * |    641702     FAM138F
+#       [4]     chr1     [ 64091,  74090]      * |     79501       OR4F5
+#       [5]     chr1     [362659, 372658]      * |    729759      OR4F29
+#       ...      ...                  ...    ... .       ...         ...
+#   [29432]     chrY [27763264, 27773263]      * |      9085        CDY1
+#   [29433]     chrY [27869637, 27879636]      * |    114760       TTTY3
+#   [29434]     chrY [59095457, 59105456]      * |     10251       SPRY3
+#   [29435]     chrY [59208949, 59218948]      * |      6845       VAMP7
+#   [29436]     chrY [59325252, 59335251]      * |      3581        IL9R
+#   -------
+#   seqinfo: 25 sequences (1 circular) from hg19 genome
+# > fivekb_gr[fivekb_gr$gene_id == 3581]
+# GRanges object with 2 ranges and 2 metadata columns:
+#       seqnames                 ranges strand |   gene_id      symbol
+#          <Rle>              <IRanges>  <Rle> | <integer> <character>
+#   [1]     chrX [155222246, 155232245]      * |      3581        IL9R
+#   [2]     chrY [ 59325252,  59335251]      * |      3581        IL9R
+#   -------
+#   seqinfo: 25 sequences (1 circular) from hg19 genome
