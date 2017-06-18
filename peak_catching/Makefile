@@ -13,4 +13,4 @@ genome_coverage :
 	bash genome_coverage.sh
 
 summarize_catching:
-	Rscript peak_catching.R
+	Rscript summarize_peak_catching.R
