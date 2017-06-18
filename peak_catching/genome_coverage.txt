@@ -1,8 +1,11 @@
+5kb.ldef 280879519
+5kb_outside.ldef 2769387401
 chromhmm.0.E_fantom.ldef 364381917
 chromhmm.0.E.ldef 157634058
 chromhmm.0.E_thurman_fantom.ldef 512289892
 chromhmm.0.E_thurman.ldef 319372939
 chromhmm.0.fantom.ldef 222052110
+chromhmm.0.nearest_tss_500000.ldef 477903635
 chromhmm.0.P2P_E_fantom.ldef 427496118
 chromhmm.0.P2P_E.ldef 226689529
 chromhmm.0.P2P_E_thurman_fantom.ldef 569006571
@@ -18,6 +21,7 @@ chromhmm.1000.E.ldef 188847167
 chromhmm.1000.E_thurman_fantom.ldef 595096514
 chromhmm.1000.E_thurman.ldef 375882421
 chromhmm.1000.fantom.ldef 251818052
+chromhmm.1000.nearest_tss_500000.ldef 576510952
 chromhmm.1000.P2P_E_fantom.ldef 493510464
 chromhmm.1000.P2P_E.ldef 265414716
 chromhmm.1000.P2P_E_thurman_fantom.ldef 658205271
@@ -33,6 +37,7 @@ chromhmm_dnase.0.E.ldef 192682511
 chromhmm_dnase.0.E_thurman_fantom.ldef 589845608
 chromhmm_dnase.0.E_thurman.ldef 381763688
 chromhmm_dnase.0.fantom.ldef 238941533
+chromhmm_dnase.0.nearest_tss_500000.ldef 582429221
 chromhmm_dnase.0.P2P_E_fantom.ldef 482577985
 chromhmm_dnase.0.P2P_E.ldef 266198780
 chromhmm_dnase.0.P2P_E_thurman_fantom.ldef 650286334
@@ -48,6 +53,7 @@ chromhmm_dnase.1000.E.ldef 319572296
 chromhmm_dnase.1000.E_thurman_fantom.ldef 975244181
 chromhmm_dnase.1000.E_thurman.ldef 607241517
 chromhmm_dnase.1000.fantom.ldef 418642635
+chromhmm_dnase.1000.nearest_tss_500000.ldef 973548411
 chromhmm_dnase.1000.P2P_E_fantom.ldef 816815758
 chromhmm_dnase.1000.P2P_E.ldef 435770897
 chromhmm_dnase.1000.P2P_E_thurman_fantom.ldef 1072340075
@@ -63,6 +69,7 @@ chromhmm_dnase_fantom.0.E.ldef 193364126
 chromhmm_dnase_fantom.0.E_thurman_fantom.ldef 592315684
 chromhmm_dnase_fantom.0.E_thurman.ldef 383739793
 chromhmm_dnase_fantom.0.fantom.ldef 239446827
+chromhmm_dnase_fantom.0.nearest_tss_500000.ldef 584463166
 chromhmm_dnase_fantom.0.P2P_E_fantom.ldef 484012883
 chromhmm_dnase_fantom.0.P2P_E.ldef 267079266
 chromhmm_dnase_fantom.0.P2P_E_thurman_fantom.ldef 653302552
@@ -78,6 +85,7 @@ chromhmm_dnase_fantom.1000.E.ldef 321188418
 chromhmm_dnase_fantom.1000.E_thurman_fantom.ldef 980259429
 chromhmm_dnase_fantom.1000.E_thurman.ldef 611265690
 chromhmm_dnase_fantom.1000.fantom.ldef 419429842
+chromhmm_dnase_fantom.1000.nearest_tss_500000.ldef 978101963
 chromhmm_dnase_fantom.1000.P2P_E_fantom.ldef 819355640
 chromhmm_dnase_fantom.1000.P2P_E.ldef 437545622
 chromhmm_dnase_fantom.1000.P2P_E_thurman_fantom.ldef 1077720201
@@ -93,6 +101,7 @@ chromhmm_dnase_thurman.0.E.ldef 197454447
 chromhmm_dnase_thurman.0.E_thurman_fantom.ldef 606025087
 chromhmm_dnase_thurman.0.E_thurman.ldef 390626083
 chromhmm_dnase_thurman.0.fantom.ldef 247474559
+chromhmm_dnase_thurman.0.nearest_tss_500000.ldef 597381084
 chromhmm_dnase_thurman.0.P2P_E_fantom.ldef 495615086
 chromhmm_dnase_thurman.0.P2P_E.ldef 271415539
 chromhmm_dnase_thurman.0.P2P_E_thurman_fantom.ldef 667041492
@@ -108,6 +117,7 @@ chromhmm_dnase_thurman.1000.E.ldef 338074844
 chromhmm_dnase_thurman.1000.E_thurman_fantom.ldef 1045052351
 chromhmm_dnase_thurman.1000.E_thurman.ldef 638575718
 chromhmm_dnase_thurman.1000.fantom.ldef 462775400
+chromhmm_dnase_thurman.1000.nearest_tss_500000.ldef 1031513372
 chromhmm_dnase_thurman.1000.P2P_E_fantom.ldef 879271391
 chromhmm_dnase_thurman.1000.P2P_E.ldef 457930608
 chromhmm_dnase_thurman.1000.P2P_E_thurman_fantom.ldef 1145386515
@@ -123,6 +133,7 @@ chromhmm_dnase_thurman_fantom.0.E.ldef 198113500
 chromhmm_dnase_thurman_fantom.0.E_thurman_fantom.ldef 608202330
 chromhmm_dnase_thurman_fantom.0.E_thurman.ldef 392258272
 chromhmm_dnase_thurman_fantom.0.fantom.ldef 247934192
+chromhmm_dnase_thurman_fantom.0.nearest_tss_500000.ldef 599350365
 chromhmm_dnase_thurman_fantom.0.P2P_E_fantom.ldef 496799337
 chromhmm_dnase_thurman_fantom.0.P2P_E.ldef 272200895
 chromhmm_dnase_thurman_fantom.0.P2P_E_thurman_fantom.ldef 669406337
@@ -138,6 +149,7 @@ chromhmm_dnase_thurman_fantom.1000.E.ldef 339578953
 chromhmm_dnase_thurman_fantom.1000.E_thurman_fantom.ldef 1049911120
 chromhmm_dnase_thurman_fantom.1000.E_thurman.ldef 642419238
 chromhmm_dnase_thurman_fantom.1000.fantom.ldef 463374706
+chromhmm_dnase_thurman_fantom.1000.nearest_tss_500000.ldef 1035721061
 chromhmm_dnase_thurman_fantom.1000.P2P_E_fantom.ldef 881540941
 chromhmm_dnase_thurman_fantom.1000.P2P_E.ldef 459607510
 chromhmm_dnase_thurman_fantom.1000.P2P_E_thurman_fantom.ldef 1150468966
@@ -153,6 +165,7 @@ chromhmm_fantom.0.E.ldef 158545484
 chromhmm_fantom.0.E_thurman_fantom.ldef 515550564
 chromhmm_fantom.0.E_thurman.ldef 321908151
 chromhmm_fantom.0.fantom.ldef 222718991
+chromhmm_fantom.0.nearest_tss_500000.ldef 480601374
 chromhmm_fantom.0.P2P_E_fantom.ldef 429214888
 chromhmm_fantom.0.P2P_E.ldef 227753267
 chromhmm_fantom.0.P2P_E_thurman_fantom.ldef 572346388
@@ -168,6 +181,7 @@ chromhmm_fantom.1000.E.ldef 191941537
 chromhmm_fantom.1000.E_thurman_fantom.ldef 605408570
 chromhmm_fantom.1000.E_thurman.ldef 384009583
 chromhmm_fantom.1000.fantom.ldef 254311683
+chromhmm_fantom.1000.nearest_tss_500000.ldef 585444912
 chromhmm_fantom.1000.P2P_E_fantom.ldef 499344689
 chromhmm_fantom.1000.P2P_E.ldef 269058315
 chromhmm_fantom.1000.P2P_E_thurman_fantom.ldef 669087882
@@ -183,6 +197,7 @@ chromhmm_thurman.0.E.ldef 169071201
 chromhmm_thurman.0.E_thurman_fantom.ldef 552021916
 chromhmm_thurman.0.E_thurman.ldef 340570581
 chromhmm_thurman.0.fantom.ldef 242739318
+chromhmm_thurman.0.nearest_tss_500000.ldef 513502064
 chromhmm_thurman.0.P2P_E_fantom.ldef 459294923
 chromhmm_thurman.0.P2P_E.ldef 239499385
 chromhmm_thurman.0.P2P_E_thurman_fantom.ldef 609871864
@@ -198,6 +213,7 @@ chromhmm_thurman.1000.E.ldef 246285848
 chromhmm_thurman.1000.E_thurman_fantom.ldef 814942637
 chromhmm_thurman.1000.E_thurman.ldef 481997427
 chromhmm_thurman.1000.fantom.ldef 380738306
+chromhmm_thurman.1000.nearest_tss_500000.ldef 757697785
 chromhmm_thurman.1000.P2P_E_fantom.ldef 681562692
 chromhmm_thurman.1000.P2P_E.ldef 335553085
 chromhmm_thurman.1000.P2P_E_thurman_fantom.ldef 888712486
@@ -213,6 +229,7 @@ chromhmm_thurman_fantom.0.E.ldef 169884137
 chromhmm_thurman_fantom.0.E_thurman_fantom.ldef 554516684
 chromhmm_thurman_fantom.0.E_thurman.ldef 342836390
 chromhmm_thurman_fantom.0.fantom.ldef 243191480
+chromhmm_thurman_fantom.0.nearest_tss_500000.ldef 515898858
 chromhmm_thurman_fantom.0.P2P_E_fantom.ldef 460706253
 chromhmm_thurman_fantom.0.P2P_E.ldef 240512571
 chromhmm_thurman_fantom.0.P2P_E_thurman_fantom.ldef 612590819
@@ -228,6 +245,7 @@ chromhmm_thurman_fantom.1000.E.ldef 248602203
 chromhmm_thurman_fantom.1000.E_thurman_fantom.ldef 821997754
 chromhmm_thurman_fantom.1000.E_thurman.ldef 487934766
 chromhmm_thurman_fantom.1000.fantom.ldef 381669388
+chromhmm_thurman_fantom.1000.nearest_tss_500000.ldef 764255924
 chromhmm_thurman_fantom.1000.P2P_E_fantom.ldef 685040979
 chromhmm_thurman_fantom.1000.P2P_E.ldef 338195152
 chromhmm_thurman_fantom.1000.P2P_E_thurman_fantom.ldef 896002119
@@ -243,6 +261,7 @@ dnase.0.E.ldef 75523178
 dnase.0.E_thurman_fantom.ldef 170376866
 dnase.0.E_thurman.ldef 140345518
 dnase.0.fantom.ldef 34152732
+dnase.0.nearest_tss_500000.ldef 219780128
 dnase.0.P2P_E_fantom.ldef 119287534
 dnase.0.P2P_E.ldef 87905309
 dnase.0.P2P_E_thurman_fantom.ldef 181519496
@@ -258,6 +277,7 @@ dnase.1000.E.ldef 286933162
 dnase.1000.E_thurman_fantom.ldef 845722416
 dnase.1000.E_thurman.ldef 536043633
 dnase.1000.fantom.ldef 350992265
+dnase.1000.nearest_tss_500000.ldef 858592325
 dnase.1000.P2P_E_fantom.ldef 698359485
 dnase.1000.P2P_E.ldef 377147464
 dnase.1000.P2P_E_thurman_fantom.ldef 922870572
@@ -273,6 +293,7 @@ dnase_fantom.0.E.ldef 77340755
 dnase_fantom.0.E_thurman_fantom.ldef 176773734
 dnase_fantom.0.E_thurman.ldef 145202876
 dnase_fantom.0.fantom.ldef 36134130
+dnase_fantom.0.nearest_tss_500000.ldef 224885366
 dnase_fantom.0.P2P_E_fantom.ldef 123362678
 dnase_fantom.0.P2P_E.ldef 90234036
 dnase_fantom.0.P2P_E_thurman_fantom.ldef 188295270
@@ -288,6 +309,7 @@ dnase_fantom.1000.E.ldef 288723402
 dnase_fantom.1000.E_thurman_fantom.ldef 850421293
 dnase_fantom.1000.E_thurman.ldef 540305787
 dnase_fantom.1000.fantom.ldef 351408807
+dnase_fantom.1000.nearest_tss_500000.ldef 863616954
 dnase_fantom.1000.P2P_E_fantom.ldef 700547308
 dnase_fantom.1000.P2P_E.ldef 378890235
 dnase_fantom.1000.P2P_E_thurman_fantom.ldef 927613002
@@ -303,6 +325,7 @@ dnase_thurman.0.E.ldef 82586288
 dnase_thurman.0.E_thurman_fantom.ldef 195160392
 dnase_thurman.0.E_thurman.ldef 153809174
 dnase_thurman.0.fantom.ldef 47068179
+dnase_thurman.0.nearest_tss_500000.ldef 241914475
 dnase_thurman.0.P2P_E_fantom.ldef 138990059
 dnase_thurman.0.P2P_E.ldef 95762598
 dnase_thurman.0.P2P_E_thurman_fantom.ldef 206973603
@@ -318,6 +341,7 @@ dnase_thurman.1000.E.ldef 310190002
 dnase_thurman.1000.E_thurman_fantom.ldef 937958824
 dnase_thurman.1000.E_thurman.ldef 577596942
 dnase_thurman.1000.fantom.ldef 408721322
+dnase_thurman.1000.nearest_tss_500000.ldef 932828466
 dnase_thurman.1000.P2P_E_fantom.ldef 780054477
 dnase_thurman.1000.P2P_E.ldef 406219701
 dnase_thurman.1000.P2P_E_thurman_fantom.ldef 1020070146
@@ -333,6 +357,7 @@ dnase_thurman_fantom.0.E.ldef 84325853
 dnase_thurman_fantom.0.E_thurman_fantom.ldef 201207680
 dnase_thurman_fantom.0.E_thurman.ldef 158433951
 dnase_thurman_fantom.0.fantom.ldef 48895007
+dnase_thurman_fantom.0.nearest_tss_500000.ldef 246802755
 dnase_thurman_fantom.0.P2P_E_fantom.ldef 142832625
 dnase_thurman_fantom.0.P2P_E.ldef 97996577
 dnase_thurman_fantom.0.P2P_E_thurman_fantom.ldef 213392265
@@ -348,6 +373,7 @@ dnase_thurman_fantom.1000.E.ldef 311826122
 dnase_thurman_fantom.1000.E_thurman_fantom.ldef 942287709
 dnase_thurman_fantom.1000.E_thurman.ldef 581598291
 dnase_thurman_fantom.1000.fantom.ldef 408876802
+dnase_thurman_fantom.1000.nearest_tss_500000.ldef 937385805
 dnase_thurman_fantom.1000.P2P_E_fantom.ldef 781804793
 dnase_thurman_fantom.1000.P2P_E.ldef 407745477
 dnase_thurman_fantom.1000.P2P_E_thurman_fantom.ldef 1024189964
@@ -363,6 +389,7 @@ fantom.0.E.ldef 3560777
 fantom.0.E_thurman_fantom.ldef 11967890
 fantom.0.E_thurman.ldef 9650468
 fantom.0.fantom.ldef 2989209
+fantom.0.nearest_tss_500000.ldef 9835014
 fantom.0.P2P_E_fantom.ldef 7299392
 fantom.0.P2P_E.ldef 4652484
 fantom.0.P2P_E_thurman_fantom.ldef 12805914
@@ -378,6 +405,7 @@ fantom.1000.E.ldef 12035274
 fantom.1000.E_thurman_fantom.ldef 41671558
 fantom.1000.E_thurman.ldef 32077690
 fantom.1000.fantom.ldef 12129557
+fantom.1000.nearest_tss_500000.ldef 33625510
 fantom.1000.P2P_E_fantom.ldef 26747826
 fantom.1000.P2P_E.ldef 15883496
 fantom.1000.P2P_E_thurman_fantom.ldef 44648344
@@ -388,11 +416,13 @@ fantom.1000.P2P_thurman_fantom.ldef 37110192
 fantom.1000.P2P_thurman.ldef 27239989
 fantom.1000.thurman_fantom.ldef 33619905
 fantom.1000.thurman.ldef 23513942
+nearest_tss.ldef 3050266920
 thurman.0.E_fantom.ldef 59767793
 thurman.0.E.ldef 22386022
 thurman.0.E_thurman_fantom.ldef 79798585
 thurman.0.E_thurman.ldef 44366228
 thurman.0.fantom.ldef 40403147
+thurman.0.nearest_tss_500000.ldef 68731394
 thurman.0.P2P_E_fantom.ldef 63098752
 thurman.0.P2P_E.ldef 26065803
 thurman.0.P2P_E_thurman_fantom.ldef 82884149
@@ -408,6 +438,7 @@ thurman.1000.E.ldef 124881202
 thurman.1000.E_thurman_fantom.ldef 469662246
 thurman.1000.E_thurman.ldef 248501344
 thurman.1000.fantom.ldef 251882895
+thurman.1000.nearest_tss_500000.ldef 388247813
 thurman.1000.P2P_E_fantom.ldef 387066812
 thurman.1000.P2P_E.ldef 156475670
 thurman.1000.P2P_E_thurman_fantom.ldef 496142111
@@ -423,6 +454,7 @@ thurman_fantom.0.E.ldef 25328552
 thurman_fantom.0.E_thurman_fantom.ldef 88978481
 thurman_fantom.0.E_thurman.ldef 52178643
 thurman_fantom.0.fantom.ldef 42157831
+thurman_fantom.0.nearest_tss_500000.ldef 76842271
 thurman_fantom.0.P2P_E_fantom.ldef 68482385
 thurman_fantom.0.P2P_E.ldef 29897351
 thurman_fantom.0.P2P_E_thurman_fantom.ldef 92757136
@@ -438,6 +470,7 @@ thurman_fantom.1000.E.ldef 131418319
 thurman_fantom.1000.E_thurman_fantom.ldef 488821490
 thurman_fantom.1000.E_thurman.ldef 265426484
 thurman_fantom.1000.fantom.ldef 254760148
+thurman_fantom.1000.nearest_tss_500000.ldef 406246910
 thurman_fantom.1000.P2P_E_fantom.ldef 398038216
 thurman_fantom.1000.P2P_E.ldef 164857613
 thurman_fantom.1000.P2P_E_thurman_fantom.ldef 516707743
