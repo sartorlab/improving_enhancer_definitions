@@ -99,7 +99,7 @@ for(base in enhancer_base) {
 
 		ldef_df = BiocGenerics::as.data.frame(ldef_gr)
 		colnames(ldef_df) = c('chr','start','end','width','strand','gene_id')
-		ldef_df = subset(ldef, width != 0)
+		ldef_df = subset(ldef_df, width != 0)
 		ldef_df = ldef_df[, c('chr','start','end','gene_id')]
 
 		message(sprintf('Writing %s...', ldef_file))
@@ -149,7 +149,7 @@ for(base in enhancer_base) {
 
 	ldef_df = BiocGenerics::as.data.frame(ldef_gr)
 	colnames(ldef_df) = c('chr','start','end','width','strand','gene_id')
-	ldef_df = subset(ldef, width != 0)
+	ldef_df = subset(ldef_df, width != 0)
 	ldef_df = ldef_df[, c('chr','start','end','gene_id')]
 
 	message(sprintf('Writing %s...', ldef_file))
