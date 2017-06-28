@@ -6,7 +6,8 @@ option_list = list(
   make_option(c("--dnase"), action = "store", type = "character", help = "[Optional] Path to a file listing the enhancers.  Format is one line per locus, tab-separated, chromosome, start, end, enhancer_id (no header)"),
   make_option(c("--thurman"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers (and interactions) from Thurman et al. paper."),
   make_option(c("--fantom"), action = "store", type = "character", help = "[Optional] Path to a file listing enhancers from the FANTOM5 consortium."),
-  make_option(c("--extension"), action = "store", type = "numeric", help = "[Required] Number of base pairs to extend enhancers to"),  make_option(c("--tissue_threshold_dnase"), action = "store", type = "numeric", default = 1, help = "[Optional] An integer.  If the DNase list is used to create the enhancer list, then only DNase sites supported by this number of experiments are included.  There are ~125 experiments in the ENCODE DNase list (Default: 1).")
+  make_option(c("--extension"), action = "store", type = "numeric", help = "[Required] Number of base pairs to extend enhancers to"),
+  make_option(c("--tissue_threshold_dnase"), action = "store", type = "numeric", default = 1, help = "[Optional] An integer.  If the DNase list is used to create the enhancer list, then only DNase sites supported by this number of experiments are included.  There are ~125 experiments in the ENCODE DNase list (Default: 1).")
 )
 
 option_parser = OptionParser(usage = "usage: Rscript %prog [options]", option_list = option_list, add_help_option = T,
@@ -25,31 +26,31 @@ if (length(opts$extension) == 0) {
 }
 
 #####  LOAD THE REST OF THE LIBRARIES  #####
+suppressPackageStartupMessages(library("GenomeInfoDb"))
 suppressPackageStartupMessages(library("GenomicRanges"))
 suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("reshape2"))
+
+hg19_seqinfo = GenomeInfoDb::Seqinfo(genome = 'hg19')
 
 #####  FUNCTION TO EXPAND AND RESECT GRANGES  #####
 expand_and_resect <- function(granges, min_size) {
   # extends each grange to the min_size (if not there already); if this would cause two neighboring ranges to overlap, it extends them only until they bookend
 
   # make sure everything overlapping already has been merged
+  # this WILL NOT merge ranges that bump up against each other
   granges <- reduce(granges, min.gapwidth = 0)
-
-  granges$left = start(granges)
-  granges$right = end(granges)
-
 
   # resize the ranges that are smaller than min_size; keep the ranges that are bigger than min_size as is.
   was_resized <- rep(F, length(granges))
   was_resized[(end(granges) - start(granges)) < min_size] <- T
 
   granges[(end(granges) - start(granges)) < min_size] <- resize(granges[(end(granges) - start(granges)) < min_size], width = min_size, fix = "center")
-  resized_starts <- start(granges)
-  resized_ends <- end(granges)
 
   # find the cases where, after resizing, two ranges overlap
   overlaps <- findOverlaps(granges, granges)
-  overlaps <- overlaps[(queryHits(overlaps)+1)==subjectHits(overlaps),]
+  overlaps <- overlaps[(queryHits(overlaps)+1) == subjectHits(overlaps),]
 
 
   resect_first <- queryHits(overlaps)[was_resized[queryHits(overlaps)] & !was_resized[subjectHits(overlaps)]]
@@ -69,6 +70,19 @@ expand_and_resect <- function(granges, min_size) {
   start(granges)[start(granges) <= 0] <- 1
 
   return(granges)
+}
+
+expand_and_resect2 = function(granges, min_size) {
+    granges = reduce(granges, min.gapwidth = 0)
+
+    resize = rep(F, length(granges))
+    resize[width(granges) <= min_size] = T
+
+    granges[resize] = resize(granges[resize], width = min_size, fix = 'center')
+
+    granges = reduce(granges, min.gapwidth = 0)
+
+    return(granges)
 }
 
 #####
@@ -119,78 +133,194 @@ thurman = thurman[, c('distal.chromosome', 'distal.start', 'distal.end')]
 colnames(thurman) = c('chromosome', 'start', 'end')
 
 if (opts$extension == 1) {
-  extension = 0
+    extension = 0
 } else {
-  extension = opts$extension
+    extension = opts$extension
 }
+
+#################################
+# QC
+qc_summary = data.frame()
+
+widths_list = lapply(list('chromhmm' = chromhmm, 'dnase' = dnase, 'fantom' = fantom , 'thurman' = thurman), function(e){log2(e$end - e$start)})
+widths_df = melt(widths_list)
+colnames(widths_df) = c('log2_width', 'enhancer_type')
+
+gg_density = ggplot(widths_df, aes(log2_width, ..density.., fill = enhancer_type)) +
+    geom_histogram(binwidth = 0.5) +
+    geom_vline(xintercept = log2(1000)) +
+    ggtitle('Enhancer widths by type (bins = 0.5)')
+
+gg_counts = ggplot(widths_df, aes(log2_width, fill = enhancer_type)) +
+    geom_histogram(binwidth = 0.5) +
+    geom_vline(xintercept = log2(1000)) +
+    ggtitle('Enhancer widths by type (bins = 0.5)')
+
+ggsave(gg_density, filename = 'QC_enhancer_densities.pdf', width = 8, height = 6)
+ggsave(gg_counts, filename = 'QC_enhancer_counts.pdf', width = 8, height = 6)
+#################################
 
 #####  BUILD THE COMBINATIONS  #####
 for(i in 1:nrow(combinations)) {
-  chromhmm_code = combinations[i,1]
-  dnase_code = combinations[i,2]
-  thurman_code = combinations[i,3]
-  fantom_code = combinations[i,4]
+    chromhmm_code = combinations[i,1]
+    dnase_code = combinations[i,2]
+    thurman_code = combinations[i,3]
+    fantom_code = combinations[i,4]
 
-  out_code = c()
-  if(!is.na(chromhmm_code)) {
-    out_code = c(out_code, chromhmm_code)
-  }
-  if(!is.na(dnase_code)) {
-    out_code = c(out_code, dnase_code)
-  }
-  if(!is.na(thurman_code)) {
-    out_code = c(out_code, thurman_code)
-  }
-  if(!is.na(fantom_code)) {
-    out_code = c(out_code, fantom_code)
-  }
+    out_code = c()
+    if(!is.na(chromhmm_code)) {
+        out_code = c(out_code, chromhmm_code)
+    }
+    if(!is.na(dnase_code)) {
+        out_code = c(out_code, dnase_code)
+    }
+    if(!is.na(thurman_code)) {
+        out_code = c(out_code, thurman_code)
+    }
+    if(!is.na(fantom_code)) {
+        out_code = c(out_code, fantom_code)
+    }
 
-  out_file = paste(paste(out_code, collapse = '_'), extension, 'enhancers', 'gz', sep = '.')
+    qc_prefix = paste(paste(out_code, collapse = '_'), extension, sep = '.')
+    out_file = paste(paste(out_code, collapse = '_'), extension, 'enhancers', 'gz', sep = '.')
 
-  message(sprintf('On %s', out_file))
+    message(sprintf('On %s', out_file))
 
-  if(file.exists(out_file)) {
-    message('File exists, skipping...')
-    next
-  }
+    if(file.exists(out_file)) {
+        message('File exists, skipping...')
+        next
+    }
 
-  enhancers_df = data.frame()
+    #################################
+    # Build enhancer set
+    # Add the correct enhancer pieces to a data.frame
+    enhancers_df = data.frame()
+    if (!is.na(chromhmm_code)) {
+        message('Adding chromhmm')
+        enhancers_df = rbind(enhancers_df, chromhmm)
+    }
+    if (!is.na(dnase_code)) {
+        message('Adding dnase')
+        enhancers_df = rbind(enhancers_df, dnase[,c("chromosome", "start", "end")])
+    }
+    if (!is.na(thurman_code)) {
+        message('Adding thurman')
+        enhancers_df = rbind(enhancers_df, thurman)
+    }
+    if (!is.na(fantom_code)) {
+        message('Adding fantom')
+        enhancers_df = rbind(enhancers_df, fantom)
+    }
 
-  if (!is.na(chromhmm_code)) {
-    message('Adding chromhmm')
-    enhancers_df = rbind(enhancers_df, chromhmm)
-  }
+    # Create a GRanges object
+    enhancers_gr = makeGRangesFromDataFrame(enhancers_df, ignore.strand = TRUE)
 
-  if (!is.na(dnase_code)) {
-    message('Adding dnase')
-    enhancers_df = rbind(enhancers_df, dnase[,c("chromosome", "start", "end")])
-  }
+    # Expand and resect the enhancers
+    # Note, this has a reduce() step
+    enhancers_merged = expand_and_resect2(enhancers_gr, opts$extension)
 
-  if (!is.na(thurman_code)) {
-    message('Adding thurman')
-    enhancers_df = rbind(enhancers_df, thurman)
-  }
+    # Remove any part of genes_gr from the enhancers_merged
+    # There is another reduce() step here
+    enhancers_final = GenomicRanges::setdiff(enhancers_merged, genes_gr)
 
-  if (!is.na(fantom_code)) {
-    message('Adding fantom')
-    enhancers_df = rbind(enhancers_df, fantom)
-  }
+    # Convert back to data.frame
+    enhancers_df = as.data.frame(enhancers_final)
+    enhancers_df = enhancers_df[order(enhancers_df$seqnames, enhancers_df$start), ]
 
-  enhancers_gr = makeGRangesFromDataFrame(enhancers_df, ignore.strand = TRUE)
+    message(sprintf('Writing %s', out_file))
+    write.table(enhancers_df[,c("seqnames", "start", "end")], file = gzfile(out_file), quote = F, sep = "\t", row.names = F, col.names = F)
+    #################################
 
-  # Expand enhancers, but make adjacent enhnacers within extension just bump up
-  # against each other at the midpoint
-  enhancers_merged = expand_and_resect(enhancers_gr, opts$extension)
+    #################################
+    # QC
+    # Information about numbers of enhancer regions at different stages, and
+    # the number of overlaps at different stages
+    qc_pre = length(enhancers_gr)
+    qc_post = length(enhancers_merged)
+    qc_final = length(enhancers_final)
+    pre_overlaps_5kb_overall = length(findOverlaps(enhancers_merged, genes_gr))
+    pre_overlaps_5kb_within = length(findOverlaps(enhancers_merged, genes_gr, type = 'within'))
+    pre_overlaps_5kb_trim = pre_overlaps_5kb_overall - pre_overlaps_5kb_within
+    post_overlaps_5kb_overall = length(findOverlaps(enhancers_final, genes_gr))
+    post_overlaps_5kb_within = length(findOverlaps(enhancers_final, genes_gr, type = 'within'))
+    post_overlaps_5kb_trim = post_overlaps_5kb_overall - post_overlaps_5kb_within
 
-  # Remove any part of genes_gr from the enhancers_gr
-  enhancers_merged = GenomicRanges::setdiff(enhancers_merged, genes_gr)
+    # Information about the widths of regions and distances to nearest regions
+    pre_widths_df = data.frame(type = rep.int('pre', length(enhancers_gr)), log2_width = log2(width(enhancers_gr)), stringsAsFactors = F)
+    pre_nearest_distances = as.data.frame(distanceToNearest(enhancers_gr))
 
-  enhancers_df = as.data.frame(enhancers_merged)
-  enhancers_df = enhancers_df[order(enhancers_df$seqnames, enhancers_df$start), ]
+    post_widths_df = data.frame(type = rep.int('post', length(enhancers_merged)), log2_width = log2(width(enhancers_merged)), stringsAsFactors = F)
+    post_nearest_distances = as.data.frame(distanceToNearest(enhancers_merged))
 
-  message(sprintf('Writing %s', out_file))
-  write.table(enhancers_df[,c("seqnames", "start", "end")], file = gzfile(out_file), quote = F, sep = "\t", row.names = F, col.names = F)
+    # Information about the final regions used
+    final_widths_df = data.frame(log2_width = log2(width(enhancers_final)))
+    final_nearest_distances_df = as.data.frame(distanceToNearest(enhancers_final))
+
+    # Visualizatinos combining the information pre and post resecttion/expansion
+    pre_widths_label = 'Pre-expand/resect widths'
+    post_widths_label = 'Post-expand/resect widths'
+    fill_manual = c('gray', NA)
+    names(fill_manual) = c(pre_widths_label, post_widths_label)
+    compare_widths_gg = ggplot(data = pre_widths_df, aes(x = log2_width)) +
+      geom_histogram(binwidth = 0.5, aes(fill = pre_widths_label)) +
+      geom_histogram(data = post_widths_df, binwidth = 0.5, aes(fill = post_widths_label, color = 'red')) +
+      scale_fill_manual(values = fill_manual) +
+      geom_vline(xintercept = log2(1000)) +
+      ggtitle(sprintf('%s widths (bins = 0.5)', qc_prefix)) +
+      xlab('log2_width') +
+      guides(color = FALSE) +
+      theme_bw() + theme(legend.title=element_blank(), legend.position="bottom", legend.key = element_rect(color = c('red','white')))
+    ggsave(compare_widths_gg, filename = sprintf('QC_%s_compare_widths.pdf', qc_prefix), width = 8, height = 6)
+
+    pre_distances_label = 'Pre-expand/resect distances'
+    post_distances_label = 'Post-expand/resect distances'
+    fill_manual = c('gray', NA)
+    names(fill_manual) = c(pre_distances_label, post_distances_label)
+    compare_distances_gg = ggplot(data = pre_nearest_distances, aes(x = distance)) +
+      geom_histogram(binwidth = 100, aes(fill = pre_distances_label)) +
+      geom_histogram(data = post_nearest_distances, binwidth = 100, aes(fill = post_distances_label, col = 'red')) +
+      scale_fill_manual(values = fill_manual) +
+      scale_x_continuous(limits = c(-100, 1500)) +
+      geom_vline(xintercept = 500) +
+      ggtitle(sprintf('%s nearest distances (bins = 100)', qc_prefix)) +
+      xlab('Distance to nearest') +
+      guides(color = FALSE) +
+      theme_bw() + theme(legend.title=element_blank(), legend.position="bottom", legend.key = element_rect(color = c('red','white')))
+    ggsave(compare_distances_gg, filename = sprintf('QC_%s_compare_distances.pdf', qc_prefix), width = 8, height = 6)
+
+    # Visualizations for the final regions
+    final_widths_gg = ggplot(final_widths_df, aes(log2_width)) +
+        geom_histogram(binwidth = 0.5) +
+        geom_vline(xintercept = log2(1000)) +
+        ggtitle(sprintf('%s widths (bins = 0.5)', qc_prefix)) +
+        xlab('log2_width')
+    ggsave(final_widths_gg, filename = sprintf('QC_%s_final_widths.pdf', qc_prefix), width = 8, height = 6)
+
+    final_distances_gg = ggplot(final_nearest_distances_df, aes(distance)) +
+      geom_histogram(binwidth = 100) +
+      geom_vline(xintercept = 500) +
+      scale_x_continuous(limits = c(-100, 1500)) +
+      ggtitle(sprintf('%s nearest distances (bins = 100)', qc_prefix)) +
+      xlab('Distance to nearest')
+    ggsave(final_distances_gg, filename = sprintf('QC_%s_final_distances.pdf', qc_prefix), width = 8, height = 6)
+
+    # Combine summary information
+    qc_summary = rbind(qc_summary,
+        data.frame(
+            'enhancers' = qc_prefix,
+            'num_pre_process' = qc_pre,
+            'num_post_process' = qc_post,
+            'num_final' = qc_final,
+            'num_pre_5kb_overlaps_overall' = pre_overlaps_5kb_overall,
+            'num_pre_5kb_overlaps_within' = pre_overlaps_5kb_within,
+            'num_pre_5kb_overlaps_trim' = pre_overlaps_5kb_trim,
+            'num_post_5kb_overlaps_overall' = post_overlaps_5kb_overall,
+            'num_post_5kb_overlaps_within' = post_overlaps_5kb_within,
+            'num_post_5kb_overlaps_trim' = post_overlaps_5kb_trim))
+    #################################
 }
+
+write.table(qc_summary, file = sprintf('QC_summary_%s.txt', extension), sep='\t', quote = F, row.names = F, col.names = T)
 
 #####  TEST expand_and_resect()  #####
 

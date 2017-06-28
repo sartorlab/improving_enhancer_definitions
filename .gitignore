@@ -5,3 +5,5 @@
 *.ldef
 *.pipeline
 *.counts
+enhancer_lists/*.pdf
+enhancer_lists/*.txt
