@@ -87,19 +87,26 @@ if (opts$method == "point_to_point") {
   ###
   loci1_gr = enhancers_gr[idx1$queryHits.enh]
   loci1_gr$gene_id = genes_gr$gene_id[idx1$queryHits.genes]
-  loci1_gr$symbol = genes_gr$symbol[idx1$queryHits.genes]
 
   loci2_gr = enhancers_gr[idx2$queryHits.enh]
   loci2_gr$gene_id = genes_gr$gene_id[idx2$queryHits.genes]
-  loci2_gr$symbol = genes_gr$symbol[idx2$queryHits.genes]
 
   loci_gr = sort(c(loci1_gr, loci2_gr))
-  loci_gr = unique(loci_gr)
+
+  # Split by gene_id before doing unique
+  loci_grl = split(loci_gr, loci_gr$gene_id)
+  loci_grl = unique(loci_grl)
+  loci_gr_geneid = S4Vectors::Rle(names(loci_grl), S4Vectors::elementNROWS(loci_grl))
+
+  loci_gr = unlist(loci_grl, use.names = FALSE)
+  loci_gr$gene_id = loci_gr_geneid
+
+  loci_gr = sort(loci_gr)
 
   loci_df = as.data.frame(loci_gr)
-  colnames(loci_df) = c('chr','start','end','width','strand','gene_id','symbol')
+  colnames(loci_df) = c('chr','start','end','width','strand','gene_id')
 
-  loci_df = loci_df[,c('chr','start','end','gene_id','symbol')]
+  loci_df = loci_df[,c('chr','start','end','gene_id')]
 
   write.table(x = loci_df, file = opts$out, append = F, quote = F, sep = "\t", row.names = F, col.names = T)
 
@@ -134,15 +141,14 @@ if (opts$method == "point_to_point") {
   ###
   loci_gr = enhancers_gr[idx$queryHits.enh]
   loci_gr$gene_id = genes_gr$gene_id[idx$queryHits.genes]
-  loci_gr$symbol = genes_gr$symbol[idx$queryHits.genes]
 
   loci_gr = sort(loci_gr)
   loci_gr = unique(loci_gr)
 
   loci_df = as.data.frame(loci_gr)
-  colnames(loci_df) = c('chr','start','end','width','strand','gene_id','symbol')
+  colnames(loci_df) = c('chr','start','end','width','strand','gene_id')
 
-  loci_df = loci_df[,c('chr','start','end','gene_id','symbol')]
+  loci_df = loci_df[,c('chr','start','end','gene_id')]
 
   write.table(x = loci_df, file = opts$out, append = F, quote = F, sep = "\t", row.names = F, col.names = T)
 }
