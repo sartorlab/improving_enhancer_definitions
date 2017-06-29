@@ -7,3 +7,7 @@
 *.counts
 enhancer_lists/*.pdf
 enhancer_lists/*.txt
+interaction_lists/*.pdf
+interaction_lists/*.txt
+pair_lists/*.pdf
+pair_lists/*.txt
