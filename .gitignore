@@ -2,7 +2,7 @@
 *.interactions.with_motif
 *.final_interactions
 *.pairs
-*.ldef
+*.ldef.gz
 *.pipeline
 *.counts
 enhancer_lists/*.pdf

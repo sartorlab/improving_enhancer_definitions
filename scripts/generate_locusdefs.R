@@ -87,8 +87,8 @@ for(base in enhancer_base) {
 		interaction_row = interaction_combinations[i,]
 		interaction_code = paste(interaction_row[!is.na(interaction_row)], collapse='_')
 
-		ldef_file = paste(base, interaction_code, 'ldef', sep='.')
-		qc_prefix = gsub('.ldef', '', ldef_file)
+		ldef_file = paste(base, interaction_code, 'ldef', 'gz', sep='.')
+		qc_prefix = gsub('.ldef.gz', '', ldef_file)
 
 		if(file.exists(ldef_file)) {
 			message(sprintf('%s, skipping...', ldef_file))
@@ -161,7 +161,7 @@ for(base in enhancer_base) {
 		ldef_df = ldef_df[, c('chr','start','end','gene_id')]
 
 		message(sprintf('Writing %s...', ldef_file))
-		write.table(ldef_df, file = ldef_file, sep = '\t', quote = F, row.names = F, col.names = T)
+		write.table(ldef_df, file = gzfile(ldef_file), sep = '\t', quote = F, row.names = F, col.names = T)
 
 		#################################
 	    # QC
