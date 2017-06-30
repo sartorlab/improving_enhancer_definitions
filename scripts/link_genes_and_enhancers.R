@@ -61,7 +61,8 @@ if(!file.exists(e_qc_file)) {
     header = data.frame(
         'pair_type' = 'pair_type',
         'total_loops' = 'total_loops',
-        'valid_loops' = 'valid_loops',
+        'valid_size_loops' = 'valid_size_loops',
+        'valid_final_loops' = 'valid_final_loops',
         'loops_per_gene' = 'loops_per_gene',
         'genes_per_loop' = 'genes_per_loop',
         'loops_per_enh' = 'loops_per_enh',
@@ -196,9 +197,11 @@ if (opts$method == "point_to_point") {
   	ranges = IRanges::IRanges(start = floor((interactions$start1 + interactions$end1)/2), end = floor((interactions$start2 + interactions$end2)/2))
   )
 
+  valid_loops_gr = loops_gr[which(width(loops_gr) <= 500000)]
+
   ###
-  genes_in_loops = as.data.frame(GenomicRanges::findOverlaps(genes_gr, loops_gr, type = 'within'))
-  enhancers_in_loops = as.data.frame(GenomicRanges::findOverlaps(enhancers_gr, loops_gr, type = 'within'))
+  genes_in_loops = as.data.frame(findOverlaps(genes_gr, valid_loops_gr, type = 'within'))
+  enhancers_in_loops = as.data.frame(findOverlaps(enhancers_gr, valid_loops_gr, type = 'within'))
 
   ###
   # Each subjectHit index represents a loop. Use table to count how many genes fall in each loop
@@ -237,7 +240,8 @@ if (opts$method == "point_to_point") {
     #################################
     # QC
     num_total_loops = length(loops_gr)
-    num_valid_loops = length(valid_loop_idx)
+    num_valid_size_loops = length(valid_loops_gr)
+    num_valid_final_loops = length(valid_loop_idx)
 
     unique_loop_gene = unique(idx[,c('subjectHits','queryHits.genes')])
     unique_loop_enh = unique(idx[,c('subjectHits','queryHits.enh')])
@@ -265,9 +269,11 @@ if (opts$method == "point_to_point") {
         # Loop widths
         loop_widths_list = list(
             'all' = log10(width(loops_gr)),
-            'valid' = log10(width(loops_gr[valid_loop_idx])))
+            'valid_size' = log10(width(valid_loops_gr)),
+            'valid_final' = log10(width(valid_loops_gr[valid_loop_idx])))
         loop_widths = reshape2::melt(loop_widths_list)
         colnames(loop_widths) = c('log10_width', 'type')
+        loop_widths$type = factor(loop_widths$type, levels = c('all', 'valid_size', 'valid_final'))
 
         plot_widths = ggplot(data = loop_widths, aes(x = log10_width)) +
             geom_histogram(binwidth = 0.25) +
@@ -280,7 +286,8 @@ if (opts$method == "point_to_point") {
     qc_text = data.frame(
         'pair_type' = qc_prefix,
         'total_loops' = num_total_loops,
-        'valid_loops' = num_valid_loops,
+        'valid_size_loops' = num_valid_size_loops,
+        'valid_final_loops' = num_valid_final_loops,
         t(sapply(per_list, function(p){mean(as.integer(p))})),
         stringsAsFactors = F)
     write.table(qc_text, file = e_qc_file, sep = '\t', quote = F, col.names = F, row.names = F, append = T)
