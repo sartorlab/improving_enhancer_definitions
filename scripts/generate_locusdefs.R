@@ -1,5 +1,9 @@
 library(GenomicRanges)
 
+# Have this handy
+data('locusdef.hg19.5kb', package='chipenrich.data')
+fivekb_gr = locusdef.hg19.5kb@granges
+
 chromhmm_pool = c(NA, 'chromhmm')
 dnase_pool = c(NA, 'dnase')
 thurman_pool = c(NA, 'thurman')
@@ -9,7 +13,6 @@ expand_pool = c(0, 1000)
 
 P2P_pool = c(NA, 'P2P')
 E_pool = c(NA, 'E')
-
 
 combinations = expand.grid(chromhmm_pool, dnase_pool, thurman_pool, fantom_pool, expand_pool, P2P_pool, E_pool, thurman_pool, fantom_pool, stringsAsFactors=F)
 # Get rid of 4 NAs in 1-4 and 6-9
@@ -22,8 +25,21 @@ extension_codes = combinations[,5]
 
 enhancer_base = unique(paste(enhancer_codes, extension_codes, sep='.'))
 
+ldef_qc_file = 'QC_ldefs.txt'
+if(!file.exists(ldef_qc_file)) {
+    header = data.frame(
+        'ldef_type' = 'ldef_type',
+        'total_unique_regions' = 'total_unique_regions',
+        'genome_coverage' = 'genome_coverage',
+        'genes_per_enh' = 'genes_per_enh',
+        'enhs_per_gene' = 'enhs_per_gene',
+		stringsAsFactors = F)
+    write.table(header, file = ldef_qc_file, sep = '\t', quote = F, col.names = F, row.names = F, append = T)
+}
+
 # Go by enhancer base to minimize the number of file reads
 for(base in enhancer_base) {
+	####
 	# Read files
 	message('Reading P2P...')
 	base_p2p = read.table(file = sprintf('%s/%s.P2P.pairs', '../pair_lists', base), sep='\t', header = T, as.is = T)
@@ -33,26 +49,38 @@ for(base in enhancer_base) {
 	base_thurman = read.table(file = sprintf('%s/%s.thurman.pairs', '../pair_lists', base), sep='\t', header = T, as.is = T)
 	message('Reading fantom...')
 	base_fantom = read.table(file = sprintf('%s/%s.fantom.pairs', '../pair_lists', base), sep='\t', header = T, as.is = T)
+	message('Reading enhancer base...')
+	enh_df = read.table(file = sprintf('%s/%s.enhancers.gz', '../enhancer_lists', base), sep='\t', header = F, as.is = T)
+	colnames(enh_df) = c('chr','start','end')
 
-	# Make GRanges
+	####
+	# Make GRanges of all the bases
 	base_p2p_gr = GenomicRanges::makeGRangesFromDataFrame(df = base_p2p, keep.extra.columns = TRUE)
 	base_e_gr = GenomicRanges::makeGRangesFromDataFrame(df = base_e, keep.extra.columns = TRUE)
 	base_thurman_gr = GenomicRanges::makeGRangesFromDataFrame(df = base_thurman, keep.extra.columns = TRUE)
 	base_fantom_gr = GenomicRanges::makeGRangesFromDataFrame(df = base_fantom, keep.extra.columns = TRUE)
+	base_enh_gr = GenomicRanges::makeGRangesFromDataFrame(df = enh_df)
 
 	P2P_pool = c(NA, 'P2P')
 	E_pool = c(NA, 'E')
 	thurman_pool = c(NA, 'thurman')
 	fantom_pool = c(NA, 'fantom')
-	interaction_combinations = expand.grid(P2P_pool, E_pool, thurman_pool, fantom_pool, stringsAsFactors=F)
+	nearest_pool = c(NA, 'nearest')
+	interaction_combinations = expand.grid(P2P_pool, E_pool, thurman_pool, fantom_pool, nearest_pool, stringsAsFactors=F)
 	interaction_combinations = interaction_combinations[!apply(interaction_combinations, 1, function(row){all(is.na(row))}),]
 
+	####
+	# Establish needfuls for assigning to nearest TSS
+	dist_within_tss = 500000
+
+	####
 	# Go through each interaction combination and create the locus definition
 	for(i in 1:nrow(interaction_combinations)) {
 		E_code = interaction_combinations[i,2]
 		P2P_code = interaction_combinations[i,1]
 		thurman_code = interaction_combinations[i,3]
 		fantom_code = interaction_combinations[i,4]
+		nearest_code = interaction_combinations[i,5]
 
 		ldef_gr = GenomicRanges::GRanges()
 
@@ -60,6 +88,7 @@ for(base in enhancer_base) {
 		interaction_code = paste(interaction_row[!is.na(interaction_row)], collapse='_')
 
 		ldef_file = paste(base, interaction_code, 'ldef', sep='.')
+		qc_prefix = gsub('.ldef', '', ldef_file)
 
 		if(file.exists(ldef_file)) {
 			message(sprintf('%s, skipping...', ldef_file))
@@ -70,20 +99,49 @@ for(base in enhancer_base) {
 			message('Adding P2P')
 			ldef_gr = c(ldef_gr, base_p2p_gr)
 		}
-
 		if (!is.na(E_code)) {
 			message('Adding E')
 			ldef_gr = c(ldef_gr, base_e_gr)
 		}
-
 		if (!is.na(thurman_code)) {
 			message('Adding thurman')
 			ldef_gr = c(ldef_gr, base_fantom_gr)
 		}
-
 		if (!is.na(fantom_code)) {
 			message('Adding fantom')
 			ldef_gr = c(ldef_gr, base_thurman_gr)
+		}
+		if (!is.na(nearest_code)) {
+			message('Adding nearest')
+			if(length(ldef_gr) != 0) {
+				message('Adding nearest for missing enhancers only')
+				# Then
+				overlaps = findOverlaps(ldef_gr, base_enh_gr)
+				missing_enh_idx = setdiff(seq_along(base_enh_gr), subjectHits(overlaps))
+
+				if(length(findOverlaps(ldef_gr, base_enh_gr[missing_enh_idx])) > 0) {
+					stop((sprintf('Some "missing" enhancers still intersect %s', base)))
+				}
+
+				base_enh_gr = base_enh_gr[missing_enh_idx]
+			} else {
+				message('Adding nearest for all enhancers')
+			}
+
+			# Then assign ALL of the enhancers to the nearest TSS (5kb)
+			nearests = GenomicRanges::nearest(base_enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
+			distances = GenomicRanges::distanceToNearest(base_enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
+
+			keep = which(GenomicRanges::mcols(distances)$distance < dist_within_tss)
+
+			if(length(queryHits(nearests)) != length(unique(queryHits(nearests)))) {
+				warning(sprintf('There are ties for nearest 5kb with the enhancer base: %s', base))
+			}
+
+			tmp_gr = base_enh_gr[queryHits(nearests)[keep]]
+			GenomicRanges::mcols(tmp_gr)$gene_id = fivekb_gr[subjectHits(nearests)[keep]]$gene_id
+
+			ldef_gr = c(ldef_gr, tmp_gr)
 		}
 
 		message('Reducing...')
@@ -104,56 +162,33 @@ for(base in enhancer_base) {
 
 		message(sprintf('Writing %s...', ldef_file))
 		write.table(ldef_df, file = ldef_file, sep = '\t', quote = F, row.names = F, col.names = T)
+
+		#################################
+	    # QC
+		total_unique_regions = length(unique(ldef_gr))
+		genome_coverage = sum(width(unique(ldef_gr)))
+
+		enh_hash = paste(ldef_df$chr, ldef_df$start, ldef_df$end, sep='')
+
+		genes_per_enh = as.integer(table(enh_hash))
+		enhs_per_gene = as.integer(table(as.integer(ldef_gr$gene_id)))
+
+		pdf(file = sprintf('QC_%s_gene_enh_per.pdf', qc_prefix), width = 12, height = 6)
+			par(mfrow = c(1,2))
+			hist(genes_per_enh, main = 'Genes per enhancer', xlab='')
+			hist(enhs_per_gene, main = 'Enhancers per gene', xlab='')
+		dev.off()
+
+	    qc_text = data.frame(
+			'ldef_type' = qc_prefix,
+			'total_unique_regions' = total_unique_regions,
+			'genome_coverage' = genome_coverage,
+			'genes_per_enh' = mean(genes_per_enh),
+			'enhs_per_gene' = mean(enhs_per_gene),
+			stringsAsFactors = F)
+	    write.table(qc_text, file = ldef_qc_file, sep = '\t', quote = F, col.names = F, row.names = F, append = T)
+		#################################
 	}
-
-	dist_within_tss = 500000
-
-	# Go through the enhancer bases again and assign the enhancers to the nearest TSS based on the 5kb definition
-	data('locusdef.hg19.5kb', package='chipenrich.data')
-	fivekb_gr = locusdef.hg19.5kb@granges
-
-	enh_df = read.table(file = sprintf('%s/%s.enhancers.gz', '../enhancer_lists', base), sep='\t', header = F, as.is = T)
-	colnames(enh_df) = c('chr','start','end')
-	enh_gr = GenomicRanges::makeGRangesFromDataFrame(df = enh_df)
-
-	ldef_file = paste(base, sprintf('nearest_tss_%s', format(dist_within_tss, scientific = FALSE)), 'ldef', sep='.')
-
-	if(file.exists(ldef_file)) {
-		message(sprintf('%s, skipping...', ldef_file))
-		next
-	}
-
-	# These return Hits objects, but the queryHits() should have unique indices only
-	nearests = GenomicRanges::nearest(enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
-	distances = GenomicRanges::distanceToNearest(enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
-
-	keep = which(GenomicRanges::mcols(distances)$distance < dist_within_tss)
-
-	if(length(queryHits(nearests)) != length(unique(queryHits(nearests)))) {
-		stop(sprintf('There are ties for nearest 5kb with the enhancer base: %s', base))
-	}
-
-	ldef_gr = enh_gr[queryHits(nearests)[keep]]
-	GenomicRanges::mcols(ldef_gr)$gene_id = fivekb_gr[subjectHits(nearests)[keep]]$gene_id
-
-	message('Reducing...')
-	ldef_gr = sort(ldef_gr)
-	ldef_grl = IRanges::splitAsList(ldef_gr, ldef_gr$gene_id)
-	ldef_grl = GenomicRanges::reduce(ldef_grl)
-	ldef_grl_genes = S4Vectors::Rle(names(ldef_grl), S4Vectors::elementNROWS(ldef_grl))
-
-	ldef_gr = unlist(ldef_grl, use.names = FALSE)
-	ldef_gr$gene_id = ldef_grl_genes
-
-	ldef_gr = sort(ldef_gr)
-
-	ldef_df = BiocGenerics::as.data.frame(ldef_gr)
-	colnames(ldef_df) = c('chr','start','end','width','strand','gene_id')
-	ldef_df = subset(ldef_df, width != 0)
-	ldef_df = ldef_df[, c('chr','start','end','gene_id')]
-
-	message(sprintf('Writing %s...', ldef_file))
-	write.table(ldef_df, file = ldef_file, sep = '\t', quote = F, row.names = F, col.names = T)
 }
 
 # I just want to put this odd occurrence here just in case anyone makes the mistake
@@ -175,7 +210,7 @@ for(base in enhancer_base) {
 #   [307773]     chrX [155259206, 155259606]      * |      3581
 #   -------
 #   seqinfo: 23 sequences from an unspecified genome; no seqlengths
-# > enh_gr
+# > base_enh_gr
 # GRanges object with 341715 ranges and 0 metadata columns:
 #            seqnames                 ranges strand
 #               <Rle>              <IRanges>  <Rle>
