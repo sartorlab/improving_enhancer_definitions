@@ -23,7 +23,7 @@ library(ggplot2)
     genome_coverage = read.table('genome_coverage.txt', header=F, sep = ' ', stringsAsFactors=F)
     colnames(genome_coverage) = c('ldef', 'bp_covered')
     #genome_coverage$ldef = sapply(genome_coverage$ldef, function(l){gsub('_','.',l)})
-    genome_coverage$ldef = gsub('.ldef','',genome_coverage$ldef)
+    genome_coverage$ldef = gsub('.ldef.gz','',genome_coverage$ldef)
     genome_coverage$prop_covered = genome_coverage$bp_covered / genome_size
 
 # Join num_peaks to num_uniq_peaks on the tf

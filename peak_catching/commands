@@ -3,8 +3,14 @@ set -e
 set -u
 set -o pipefail
 
-xargs -a combinations.txt -d '\n' -L 1 -t -P 20 bash peak_catching_xargs.sh
+find /home/rcavalca/latte/share/improving_enhancer_definitions/locusdefs -name "*.ldef.gz" | xargs -P 30 bash xargs_genome_coverage.sh
+find . -name "*.coverage" | xargs -n 10000 cat > genome_coverage.txt
+find . -name "*.coverage" | xargs -n 10000 rm
 
+find /home/rcavalca/espresso/share/ENCODE_chipseq -name "*.narrowPeak" | xargs -P 30 bash xargs_count_peaks.sh
+find . -name "*.peak_counts" | xargs -n 10000 cat > num_peaks.txt
+find . -name "*.peak_counts" | xargs -n 10000 rm
+
+xargs -a combinations.txt -d '\n' -L 1 -t -P 30 bash xargs_peak_catching.sh
 find . -name "*.counts" | xargs -n 10000 cat > num_uniq_peaks_assigned.txt
-
 find . -name "*.counts" | xargs -n 10000 rm

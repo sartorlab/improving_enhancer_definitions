@@ -6,7 +6,7 @@ set -o pipefail
 input=$1
 ldef=`echo ${input} | cut -f 1 -d ' '`
 peak=`echo ${input} | cut -f 2 -d ' '`
-baseldef=`basename ${ldef} '.ldef'`
+baseldef=`basename ${ldef} '.ldef.gz'`
 basepeak=`basename ${peak} '.narrowPeak'`
 outfile=${basepeak}_${baseldef}.counts
 
