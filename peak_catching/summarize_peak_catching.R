@@ -54,7 +54,7 @@ write.table(peak_catching_ldef, file = 'peak_catching_genome_coverage.txt', sep=
 # # Write tabular output
 # write.table(combined, file='peak_catching_compare_chipenrich_findoverlaps.txt', sep='\t', row.names=F, col.names=T, quote=F)
 
-caught_by_coverage_raymond = ggplot(data = peak_catching_ldef, aes(x=mean_chipenrich_caught, y=prop_covered, text = paste('ldef:', ldef))) +
+caught_by_coverage_raymond = ggplot(data = peak_catching_ldef, aes(x=mean_caught, y=mean_coverage, text = paste('ldef:', ldef))) +
     geom_point(alpha=0.5) + xlab('Peaks Caught (by midpoint)') + ylab('Genome Coverage')
 ggsave(filename='peak_catching_genome_coverage.pdf', plot = caught_by_coverage_raymond, width=6, height=6)
 
