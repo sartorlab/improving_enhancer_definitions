@@ -16,6 +16,7 @@ library(ggplot2)
 # Read in chromosomze sizes
     chrom_sizes = read.table('~/espresso/share/genomes/hg19/chromInfo_hg19.txt', sep='\t', header=F, as.is = TRUE)
     genome_size = sum(as.numeric(chrom_sizes[,2]))
+    # 3095693983
 
 # Read in genome coverage
     genome_coverage = read.table('genome_coverage.txt', header=F, sep = ' ', stringsAsFactors=F)
@@ -31,8 +32,15 @@ num_uniq_peaks$prop_caught = num_uniq_peaks$num_caught / num_uniq_peaks$num_peak
 # Join genome coverage
 num_uniq_peaks$prop_coverage = genome_coverage[match(num_uniq_peaks$ldef, genome_coverage$ldef), 'prop_covered']
 
+# Calculations less the peaks caught by 5kb definition
+fivekb_subset = subset(num_uniq_peaks, ldef == '5kb')[,c('tf','num_caught')]
+
+num_uniq_peaks = merge(num_uniq_peaks, fivekb_subset, by = 'tf', suffixes=c('.all','.5kb'))
+num_uniq_peaks$num_peaks.less_5kb = num_uniq_peaks$num_peaks - num_uniq_peaks$num_caught.5kb
+num_uniq_peaks$prop_caught.less_5kb = num_uniq_peaks$num_caught.all / num_uniq_peaks$num_peaks.less_5kb
+
 # Overall peak catching per ldef
-peak_catching_ldef = summarize(group_by(num_uniq_peaks, ldef), mean_caught = mean(prop_caught), mean_coverage = mean(prop_coverage), n = n())
+peak_catching_ldef = summarize(group_by(num_uniq_peaks, ldef), mean_caught_all = mean(prop_caught), mean_caught_less5kb = mean(prop_caught.less_5kb), mean_coverage = mean(prop_coverage), n = n())
 
 write.table(peak_catching_ldef, file = 'peak_catching_genome_coverage.txt', sep='\t', row.names = F, col.names = T, quote = F)
 
@@ -54,9 +62,13 @@ write.table(peak_catching_ldef, file = 'peak_catching_genome_coverage.txt', sep=
 # # Write tabular output
 # write.table(combined, file='peak_catching_compare_chipenrich_findoverlaps.txt', sep='\t', row.names=F, col.names=T, quote=F)
 
-caught_by_coverage_raymond = ggplot(data = peak_catching_ldef, aes(x=mean_caught, y=mean_coverage, text = paste('ldef:', ldef))) +
-    geom_point(alpha=0.5) + xlab('Peaks Caught (by midpoint)') + ylab('Genome Coverage')
-ggsave(filename='peak_catching_genome_coverage.pdf', plot = caught_by_coverage_raymond, width=6, height=6)
+all_caught_by_coverage = ggplot(data = peak_catching_ldef, aes(x=mean_caught_all, y=mean_coverage, text = paste('ldef:', ldef))) +
+    geom_point(alpha=0.5) + xlab('Peaks Caught (by midpoint, all)') + ylab('Genome Coverage')
+ggsave(filename='peak_catching_all_genome_coverage.pdf', plot = all_caught_by_coverage, width=6, height=6)
+
+less5kb_caught_by_coverage = ggplot(data = subset(peak_catching_ldef, ldef != '5kb_outside' & ldef != 'nearest_tss' & ldef != '5kb'), aes(x=mean_caught_less5kb, y=mean_coverage, text = paste('ldef:', ldef))) +
+    geom_point(alpha=0.5) + xlab('Peaks Caught (by midpoint, less 5kb peaks caught)') + ylab('Genome Coverage') + xlim(c(0,1))
+ggsave(filename='peak_catching_less5kb_genome_coverage.pdf', plot = less5kb_caught_by_coverage, width=6, height=6)
 
 # caught_by_coverage = ggplot(data = combined, aes(x=mean_chipenrich_caught, y=genome_coverage_tingting, text = paste('ldef:', ldef))) +
 #     geom_point(alpha=0.5) + xlab('Peaks Caught (by midpoint)') + ylab('Genome Coverage (Ting Ting)')
