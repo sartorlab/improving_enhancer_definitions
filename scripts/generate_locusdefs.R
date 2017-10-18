@@ -1,8 +1,10 @@
 library(GenomicRanges)
+library(org.Mm.eg.db)
+library(AnnotationDbi)
 
 # Have this handy
-data('locusdef.hg19.5kb', package='chipenrich.data')
-fivekb_gr = locusdef.hg19.5kb@granges
+data('locusdef.hg19.5kb_outside_upstream', package='chipenrich.data')
+fivekb_outside_upstream_gr = locusdef.hg19.5kb_outside_upstream@granges
 
 chromhmm_pool = c(NA, 'chromhmm')
 dnase_pool = c(NA, 'dnase')
@@ -49,9 +51,9 @@ for(base in enhancer_base) {
 	base_thurman = read.table(file = sprintf('%s/%s.thurman.pairs', '../pair_lists', base), sep='\t', header = T, as.is = T)
 	message('Reading fantom...')
 	base_fantom = read.table(file = sprintf('%s/%s.fantom.pairs', '../pair_lists', base), sep='\t', header = T, as.is = T)
-	message('Reading enhancer base...')
-	enh_df = read.table(file = sprintf('%s/%s.enhancers.gz', '../enhancer_lists', base), sep='\t', header = F, as.is = T)
-	colnames(enh_df) = c('chr','start','end')
+	# message('Reading enhancer base...')
+	# enh_df = read.table(file = sprintf('%s/%s.enhancers.gz', '../enhancer_lists', base), sep='\t', header = F, as.is = T)
+	# colnames(enh_df) = c('chr','start','end')
 
 	####
 	# Make GRanges of all the bases
@@ -59,7 +61,7 @@ for(base in enhancer_base) {
 	base_e_gr = GenomicRanges::makeGRangesFromDataFrame(df = base_e, keep.extra.columns = TRUE)
 	base_thurman_gr = GenomicRanges::makeGRangesFromDataFrame(df = base_thurman, keep.extra.columns = TRUE)
 	base_fantom_gr = GenomicRanges::makeGRangesFromDataFrame(df = base_fantom, keep.extra.columns = TRUE)
-	base_enh_gr = GenomicRanges::makeGRangesFromDataFrame(df = enh_df)
+	# base_enh_gr = GenomicRanges::makeGRangesFromDataFrame(df = enh_df)
 
 	P2P_pool = c(NA, 'P2P')
 	E_pool = c(NA, 'E')
@@ -68,10 +70,12 @@ for(base in enhancer_base) {
 	nearest_pool = c(NA, 'nearest')
 	interaction_combinations = expand.grid(P2P_pool, E_pool, thurman_pool, fantom_pool, nearest_pool, stringsAsFactors=F)
 	interaction_combinations = interaction_combinations[!apply(interaction_combinations, 1, function(row){all(is.na(row))}),]
+  ### get rid of rows with first 4 columns of NA and 5th of "nearest"
+  interaction_combinations = interaction_combinations[!(rowSums(is.na(interaction_combinations[,1:4]))==4 & interaction_combinations[,5]=="nearest"),]
 
 	####
 	# Establish needfuls for assigning to nearest TSS
-	dist_within_tss = 500000
+	# dist_within_tss = 500000
 
 	####
 	# Go through each interaction combination and create the locus definition
@@ -113,39 +117,24 @@ for(base in enhancer_base) {
 		}
 		if (!is.na(nearest_code)) {
 			message('Adding nearest')
-			if(length(ldef_gr) != 0) {
-				message('Adding nearest for missing enhancers only')
-				# Then
-				overlaps = findOverlaps(ldef_gr, base_enh_gr)
-				missing_enh_idx = setdiff(seq_along(base_enh_gr), subjectHits(overlaps))
-
-				if(length(findOverlaps(ldef_gr, base_enh_gr[missing_enh_idx])) > 0) {
-					stop((sprintf('Some "missing" enhancers still intersect %s', base)))
-				}
-
-				base_enh_gr = base_enh_gr[missing_enh_idx]
-			} else {
-				message('Adding nearest for all enhancers')
-			}
-
-			# Then assign ALL of the enhancers to the nearest TSS (5kb)
-			nearests = GenomicRanges::nearest(base_enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
-			distances = GenomicRanges::distanceToNearest(base_enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
-
-			keep = which(GenomicRanges::mcols(distances)$distance < dist_within_tss)
-
-			if(length(queryHits(nearests)) != length(unique(queryHits(nearests)))) {
-				warning(sprintf('There are ties for nearest 5kb with the enhancer base: %s', base))
-			}
-
-			tmp_gr = base_enh_gr[queryHits(nearests)[keep]]
-			GenomicRanges::mcols(tmp_gr)$gene_id = fivekb_gr[subjectHits(nearests)[keep]]$gene_id
-
-			ldef_gr = c(ldef_gr, tmp_gr)
+      ### find overlapped ranges between >5kb ldef and enhancer ldef
+      ovlp_outside5kb_vs_ldef = data.frame(findOverlaps(fivekb_outside_upstream_gr,ldef_gr))
+      ovlpIndex.list = split(ovlp_outside5kb_vs_ldef$subjectHits, ovlp_outside5kb_vs_ldef$queryHits)
+      ### for each overlapped >5kb ldef, substract the overlapped enhancer ldef and keep the remaining region linked the nearest tss gene
+      subsetLdef = mapply(function(x,y){tmp=GenomicRanges::setdiff(fivekb_outside_upstream_gr[x], ldef_gr[y]); mcols(tmp)=data.frame(gene_id= mcols(fivekb_outside_upstream_gr[x])$gene_id); tmp}, as.integer(names(ovlpIndex.list)), ovlpIndex.list)
+      ### concatenate all subset ldef
+      subsetLdef = do.call(c, subsetLdef)
+      ### add all other >5kb ldefs without any enhancer ldef
+      tmp = fivekb_outside_upstream_gr[-unique(ovlp_outside5kb_vs_ldef[,1])]
+      mcols(tmp)$symbol <- NULL
+      subsetLdef = c(subsetLdef,tmp)
+      ### add subsetLdef back to enhancer ldef
+      ldef_gr = c(ldef_gr, subsetLdef)
 		}
 
 		message('Reducing...')
-		ldef_gr = sort(ldef_gr)
+    seqlevels(ldef_gr) = sort(seqlevels(ldef_gr))
+    ldef_gr = sort(ldef_gr)
 		ldef_grl = IRanges::splitAsList(ldef_gr, ldef_gr$gene_id)
 		ldef_grl = GenomicRanges::reduce(ldef_grl)
 		ldef_grl_genes = S4Vectors::Rle(names(ldef_grl), S4Vectors::elementNROWS(ldef_grl))
@@ -159,6 +148,20 @@ for(base in enhancer_base) {
 		colnames(ldef_df) = c('chr','start','end','width','strand','gene_id')
 		ldef_df = subset(ldef_df, width > 5)
 		ldef_df = ldef_df[, c('chr','start','end','gene_id')]
+
+
+    # Get Entrez ID to gene symbol mappings for custom locus definitions
+    # currently all enhancer ldefs are hg19
+    egSYMBOL = org.Hs.eg.db::org.Hs.egSYMBOL
+    ### Build Entrez ID to gene symbol mapping
+    mapped_genes = AnnotationDbi::mappedkeys(egSYMBOL)
+    eg2symbol = as.data.frame(egSYMBOL[mapped_genes])
+    eg2symbol$gene_id = as.integer(eg2symbol$gene_id)
+
+    # map the gene Entrez ID in ldef to symbol
+    tmp = data.frame(mcols(ldef_gr))
+    tmp$symbol = eg2symbol[match(tmp$gene_id, eg2symbol[,1]),2]
+    mcols(ldef_gr) = tmp
 
 		message(sprintf('Writing %s...', ldef_file))
 		write.table(ldef_df, file = gzfile(ldef_file), sep = '\t', quote = F, row.names = F, col.names = T)
