@@ -1,5 +1,5 @@
 library(GenomicRanges)
-library(org.Mm.eg.db)
+library(org.Hs.eg.db)
 library(AnnotationDbi)
 
 # Have this handy
