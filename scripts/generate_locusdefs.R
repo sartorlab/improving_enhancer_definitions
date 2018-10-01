@@ -4,7 +4,10 @@ library(AnnotationDbi)
 
 # Have this handy
 data('locusdef.hg19.5kb_outside_upstream', package='chipenrich.data')
-fivekb_outside_upstream_gr = locusdef.hg19.5kb_outside_upstream@granges
+fivekb_outside_gr = locusdef.hg19.5kb_outside@granges
+
+data('locusdef.hg19.5kb', package='chipenrich.data')
+fivekb_gr = locusdef.hg19.5kb@granges
 
 chromhmm_pool = c(NA, 'chromhmm')
 dnase_pool = c(NA, 'dnase')
@@ -67,15 +70,17 @@ for(base in enhancer_base) {
 	E_pool = c(NA, 'E')
 	thurman_pool = c(NA, 'thurman')
 	fantom_pool = c(NA, 'fantom')
-	nearest_pool = c(NA, 'nearest')
-	interaction_combinations = expand.grid(P2P_pool, E_pool, thurman_pool, fantom_pool, nearest_pool, stringsAsFactors=F)
+  nearest_pool = c(NA, 'nearest')
+  nearest_All_pool = c(NA, 'nearest_All')
+	interaction_combinations = expand.grid(P2P_pool, E_pool, thurman_pool, fantom_pool, nearest_pool, nearest_All_pool, stringsAsFactors=F)
 	interaction_combinations = interaction_combinations[!apply(interaction_combinations, 1, function(row){all(is.na(row))}),]
-  ### get rid of rows with first 4 columns of NA and 5th of "nearest"
-  interaction_combinations = interaction_combinations[!(rowSums(is.na(interaction_combinations[,1:4]))==4 & interaction_combinations[,5]=="nearest"),]
-
+  ### get rid of rows with first 4 columns of NA and 5th of "nearest or 6th of "nearest_All"
+  interaction_combinations = interaction_combinations[!(rowSums(is.na(interaction_combinations[,1:4]))==4 & (interaction_combinations[,5]=="nearest" | interaction_combinations[,6]=="nearest_All")),]
+  # get rid of interactions with both nearest and nearest_All
+  interaction_combinations = interaction_combinations[!(interaction_combinations[,5] %in% "nearest" & interaction_combinations[,6] %in% "nearest_All"),]
 	####
 	# Establish needfuls for assigning to nearest TSS
-	# dist_within_tss = 500000
+	dist_within_tss = 500000
 
 	####
 	# Go through each interaction combination and create the locus definition
@@ -115,22 +120,55 @@ for(base in enhancer_base) {
 			message('Adding fantom')
 			ldef_gr = c(ldef_gr, base_thurman_gr)
 		}
-		if (!is.na(nearest_code)) {
+    if (!is.na(nearest_code)) {
 			message('Adding nearest')
-      ### find overlapped ranges between >5kb ldef and enhancer ldef
-      ovlp_outside5kb_vs_ldef = data.frame(findOverlaps(fivekb_outside_upstream_gr,ldef_gr))
+			if(length(ldef_gr) != 0) {
+				message('Adding nearest for missing enhancers only')
+				# Then
+				overlaps = findOverlaps(ldef_gr, base_enh_gr)
+				missing_enh_idx = setdiff(seq_along(base_enh_gr), subjectHits(overlaps))
+
+				if(length(findOverlaps(ldef_gr, base_enh_gr[missing_enh_idx])) > 0) {
+					stop((sprintf('Some "missing" enhancers still intersect %s', base)))
+				}
+
+				base_enh_gr = base_enh_gr[missing_enh_idx]
+			} else {
+				message('Adding nearest for all enhancers')
+			}
+
+			# Then assign ALL of the enhancers to the nearest TSS (5kb)
+			nearests = GenomicRanges::nearest(base_enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
+			distances = GenomicRanges::distanceToNearest(base_enh_gr, fivekb_gr, ignore.strand = TRUE, select='all')
+
+			keep = which(GenomicRanges::mcols(distances)$distance < dist_within_tss)
+
+			if(length(queryHits(nearests)) != length(unique(queryHits(nearests)))) {
+				warning(sprintf('There are ties for nearest 5kb with the enhancer base: %s', base))
+			}
+
+			tmp_gr = base_enh_gr[queryHits(nearests)[keep]]
+			GenomicRanges::mcols(tmp_gr)$gene_id = fivekb_gr[subjectHits(nearests)[keep]]$gene_id
+
+			ldef_gr = c(ldef_gr, tmp_gr)
+		}
+		if (!is.na(nearest_All_code)) {
+			message('Adding all peaks outsied enhancer ldefs but 5kb_outside of a gene to that gene')
+      ### find overlapped ranges between 5kb_outside ldef and enhancer ldef
+      ovlp_outside5kb_vs_ldef = data.frame(findOverlaps(fivekb_outside_gr,ldef_gr))
       ovlpIndex.list = split(ovlp_outside5kb_vs_ldef$subjectHits, ovlp_outside5kb_vs_ldef$queryHits)
-      ### for each overlapped >5kb ldef, substract the overlapped enhancer ldef and keep the remaining region linked the nearest tss gene
-      subsetLdef = mapply(function(x,y){tmp=GenomicRanges::setdiff(fivekb_outside_upstream_gr[x], ldef_gr[y]); mcols(tmp)=data.frame(gene_id= mcols(fivekb_outside_upstream_gr[x])$gene_id); tmp}, as.integer(names(ovlpIndex.list)), ovlpIndex.list)
+      ### for each overlapped 5kb_outside ldef, substract the overlapped enhancer ldef and keep the remaining region linked the nearest tss gene (using 5kb ldef)
+      subsetLdef = mapply(function(x,y){tmp=GenomicRanges::setdiff(fivekb_outside_gr[x], ldef_gr[y]); mcols(tmp)=data.frame(gene_id= mcols(fivekb_outside_gr[x])$gene_id); tmp}, as.integer(names(ovlpIndex.list)), ovlpIndex.list)
       ### concatenate all subset ldef
       subsetLdef = do.call(c, subsetLdef)
-      ### add all other >5kb ldefs without any enhancer ldef
-      tmp = fivekb_outside_upstream_gr[-unique(ovlp_outside5kb_vs_ldef[,1])]
+      ### add all other 5kb_outsdie ldefs without any enhancer ldef
+      tmp = fivekb_outside_gr[-unique(ovlp_outside5kb_vs_ldef[,1])]
       mcols(tmp)$symbol <- NULL
       subsetLdef = c(subsetLdef,tmp)
       ### add subsetLdef back to enhancer ldef
       ldef_gr = c(ldef_gr, subsetLdef)
 		}
+
 
 		message('Reducing...')
     seqlevels(ldef_gr) = sort(seqlevels(ldef_gr))
