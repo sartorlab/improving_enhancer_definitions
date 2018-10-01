@@ -3,7 +3,7 @@ library(org.Hs.eg.db)
 library(AnnotationDbi)
 
 # Have this handy
-data('locusdef.hg19.5kb_outside_upstream', package='chipenrich.data')
+data('locusdef.hg19.5kb_outside', package='chipenrich.data')
 fivekb_outside_gr = locusdef.hg19.5kb_outside@granges
 
 data('locusdef.hg19.5kb', package='chipenrich.data')
