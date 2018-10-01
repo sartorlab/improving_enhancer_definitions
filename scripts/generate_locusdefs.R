@@ -90,6 +90,7 @@ for(base in enhancer_base) {
 		thurman_code = interaction_combinations[i,3]
 		fantom_code = interaction_combinations[i,4]
 		nearest_code = interaction_combinations[i,5]
+    nearest_All_code = interaction_combinations[i,6]
 
 		ldef_gr = GenomicRanges::GRanges()
 
